@@ -4,15 +4,21 @@
 
 #include "Robot.h"
 
+#include "FRC3484_Lib/utils/SC_Functions.h"
+
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/CommandScheduler.h>
 
 void Robot::RobotInit() 
 {
-  GP1_driver = new XboxController(/*USB Port*/ 0);
-  GP2_gameDevice = new XboxController(/*USB Port*/ 1);
+  GP1_Driver = new XboxController(/*USB Port*/ 0);
+  GP2_GameDevice = new XboxController(/*USB Port*/ 1);
 
-  drivetrain = new SC::SC_MecanumDrive();
+  drivetrain = new Drivetrain(std::make_tuple<int, int>(C_SRX_FR_CIM, C_SRX_FR_MINI),
+                              std::make_tuple<int, int>(C_SRX_FL_CIM, C_SRX_FL_MINI),
+                              std::make_tuple<int, int>(C_SRX_BR_CIM, C_SRX_BR_MINI),
+                              std::make_tuple<int, int>(C_SRX_BL_CIM, C_SRX_BL_MINI),
+                              C_DRIVE_SOL);
 }
 
 /**
@@ -59,6 +65,7 @@ void Robot::TeleopInit() {
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
   }
+
 }
 
 /**
@@ -66,7 +73,9 @@ void Robot::TeleopInit() {
  */
 void Robot::TeleopPeriodic() 
 {
-
+	drivetrain->Drive(SC::F_Deadband(GP1_Driver->GetLeftX(), C_DRIVE_DEADBAND),
+						SC::F_Deadband(GP1_Driver->GetLeftY(), C_DRIVE_DEADBAND),
+						0.0, GP1_Driver->GetAButton());
 }
 
 /**

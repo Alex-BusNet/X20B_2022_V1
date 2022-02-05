@@ -39,13 +39,20 @@
 #define C_PDP         14
 
 /* Solenoid Channels */
-#define C_DRIVE_SOL   0
+#define C_DRIVE_SOL   0 // Shifter
 #define C_INTAKE_SOL  1 // drop the intake
 #define C_LOADER_SOL  2 // Drive the loader
 #define C_WINCH_SOL   3 // Engage the winch motor 
 #define C_HANG_SOL    4 // Extend the hang device
 
+/* Datatype Shortcuts */
+#define rpm_t units::revolutions_per_minute_t
+
+/* Settings */
+#define C_DRIVE_DEADBAND 0.05
+
 const units::feet_per_second_t C_HIGH_GEAR_MAX_SPEED = 15_fps;
 const units::feet_per_second_t C_LOW_GEAR_MAX_SPEED = 10_fps;
 
 const std::tuple<int, int> C_BLANK_IDS = std::make_tuple<int, int>(-1, -1);
+

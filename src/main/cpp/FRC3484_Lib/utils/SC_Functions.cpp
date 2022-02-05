@@ -1,9 +1,10 @@
-#include "FRC3484_Lib/utils/SC_Functions.h"
-#include "units/math.h"
+//#include "FRC3484_Lib/utils/SC_Functions.h"
+//#include "units/math.h"
 
 /*
  * F_Limit body declarations
  */
+/*
 template<class T>
 T SC::F_Limit(T fmin, T fmax, T fin)
 {
@@ -79,7 +80,7 @@ T SC::F_Limit(SC::SC_Range<T> valRange, T fin, bool& bounded)
 /*
  * F_Scale body declarations
  */
-
+/*
 template<class T1, class T2>
 T2 SC::F_Scale(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
 {
@@ -109,10 +110,12 @@ T2 SC::F_Scale(SC::SC_Range<T1> InRange, SC::SC_Range<T2> OutRange, T1 fin)
 {
     return SC::F_Scale(InRange.Val_min, InRange.Val_max, OutRange.Val_min, OutRange.Val_max, fin);
 }
+*/
 
 /*
  * Misc. Function body declarations
  */
+/*
 template<class T>
 double SC::F_Percent(T num, T den)
 {
@@ -145,3 +148,4 @@ T SC::F_XYCurve(T* known_xs, T* known_ys, T xin, int size)
         return known_ys[idx] + (xin - known_xs[idx]) * ((known_ys[idx+1] - known_ys[idx]) / (known_xs[idx+1] - known_xs[idx]));
     }   
 }
+*/

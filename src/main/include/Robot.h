@@ -10,8 +10,7 @@
 #include "RobotContainer.h"
 
 #include <frc/XboxController.h>
-#include "FRC3484_Lib/subsystems/SC_MecanumDrive.h"
-#include "FRC3484_Lib/utils/SC_Functions.h"
+#include "subsystems/Drivetrain.h"
 #include "FRC3484_Lib/utils/SC_Datatypes.h"
 
 
@@ -40,9 +39,9 @@ class Robot : public frc::TimedRobot {
   frc2::Command* m_autonomousCommand = nullptr;
 
   RobotContainer m_container;
-  SC::SC_MecanumDrive *drivetrain;
+  Drivetrain *drivetrain;
 
-  XboxController  *GP1_driver, *GP2_gameDevice; // GP = Gamepad
+  XboxController  *GP1_Driver, *GP2_GameDevice; // GP = Gamepad
 
   double motorOutput;
   double ctrl_1_A0;
