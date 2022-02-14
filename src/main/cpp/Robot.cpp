@@ -3,9 +3,12 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "Robot.h"
+#include "Constants.h"
 
 #include "FRC3484_Lib/utils/SC_Functions.h"
 
+
+#include "frc/PneumaticsModuleType.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/CommandScheduler.h>
 
@@ -14,11 +17,11 @@ void Robot::RobotInit()
   GP1_Driver = new XboxController(/*USB Port*/ 0);
   GP2_GameDevice = new XboxController(/*USB Port*/ 1);
 
-  drivetrain = new Drivetrain(std::make_tuple<int, int>(C_SRX_FR_CIM, C_SRX_FR_MINI),
-                              std::make_tuple<int, int>(C_SRX_FL_CIM, C_SRX_FL_MINI),
-                              std::make_tuple<int, int>(C_SRX_BR_CIM, C_SRX_BR_MINI),
-                              std::make_tuple<int, int>(C_SRX_BL_CIM, C_SRX_BL_MINI),
-                              C_DRIVE_SOL);
+  
+  x22_drive = new X22_Drivetrain(X22_TRACK_WIDTH, 14_fps, 90_deg_per_s,
+                                 std::make_tuple<int, int>(C_FX_LEFT_MASTER, C_FX_LEFT_SLAVE),
+                                 std::make_tuple<int, int>(C_FX_RIGHT_MASTER, C_FX_RIGHT_SLAVE),
+                                 SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::CTREPCM, C_DRIVE_SOL});
 }
 
 /**
@@ -73,9 +76,9 @@ void Robot::TeleopInit() {
  */
 void Robot::TeleopPeriodic() 
 {
-	drivetrain->Drive(SC::F_Deadband(GP1_Driver->GetLeftX(), C_DRIVE_DEADBAND),
-						SC::F_Deadband(GP1_Driver->GetLeftY(), C_DRIVE_DEADBAND),
-						0.0, GP1_Driver->GetAButton());
+	x22_drive->Drive(SC::F_Deadband(-GP1_Driver->GetLeftY(), C_DRIVE_DEADBAND),
+						        SC::F_Deadband(GP1_Driver->GetLeftX(), C_DRIVE_DEADBAND));
+  
 }
 
 /**

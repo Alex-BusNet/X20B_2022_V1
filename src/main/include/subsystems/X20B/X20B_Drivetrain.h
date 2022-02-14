@@ -1,21 +1,21 @@
 #ifndef DRIVETRAIN_H
 #define DRIVETRAIN_H
 
-#include "../FRC3484_Lib/subsystems/SC_MecanumDrive.h"
+#include "FRC3484_Lib/subsystems/SC_MecanumDrive.h"
 #include "frc/Solenoid.h"
 #include "ctre/phoenix/motorcontrol/can/TalonSRX.h"
 
-class Drivetrain : public SC::SC_MecanumDrive
+class X20B_Drivetrain
 {
 public:
-    Drivetrain();
-    Drivetrain( std::tuple<int, int> chFR, 
+    X20B_Drivetrain();
+    X20B_Drivetrain( std::tuple<int, int> chFR, 
                 std::tuple<int, int> chFL, 
                 std::tuple<int, int> chBR, 
                 std::tuple<int, int> chBL,
                 int ch_shift);
 
-    ~Drivetrain();
+    ~X20B_Drivetrain();
 
     void Drive(double joystick_x, double joystick_y, double gyro, bool shift);
 

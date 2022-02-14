@@ -2,14 +2,18 @@
 #define SC_DATATYPES_H
 
 
-#include "TC3_Syntax.h"
+//#include "TC3_Syntax.h"
 #include <tuple>
 #include <algorithm>
 #include <stdexcept>
+#include "frc/PneumaticsModuleType.h"
 
 namespace SC
 {
     typedef struct {double Kp; double Ki; double Kd; double Kf;} SC_PIDConstants;
+
+    typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Channel;} SC_Solenoid;
+    typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Fwd_Channel; int Rev_Channel;} SC_DoubleSolenoid;
 
     // PID loop Integral Anti-Windup calculation modes
     enum SC_PID_AW_MODE { OFF, /*
@@ -37,24 +41,24 @@ namespace SC
 
         SC_Range& operator=(SC_Range& rhs)
         {
-            this->Val_max = max(rhs.Val_max, rhs.Val_min);
-            this->Val_min = min(rhs.Val_max, rhs.Val_min);
+            this->Val_max = std::max(rhs.Val_max, rhs.Val_min);
+            this->Val_min = std::min(rhs.Val_max, rhs.Val_min);
 
             return *this;
         }
 
         SC_Range& operator()(T val1, T val2)
         {
-            this->Val_max = max(val1, val2);
-            this->Val_min = min(val1, val2);
+            this->Val_max = std::max(val1, val2);
+            this->Val_min = std::min(val1, val2);
 
             return *this;
         }
 
-        SC_Range& operator=(tuple<T, T> rhs)
+        SC_Range& operator=(std::tuple<T, T> rhs)
         {
-            this->Val_max = max(get<0>(rhs), get<1>(rhs));
-            this->Val_min = min(get<0>(rhs), get<1>(rhs));
+            this->Val_max = std::max(std::get<0>(rhs), std::get<1>(rhs));
+            this->Val_min = std::min(std::get<0>(rhs), std::get<1>(rhs));
 
             return *this;
         }
@@ -139,7 +143,7 @@ namespace SC
     };
 
     enum DriveMode { DEFAULT, TANK, DIFFERENTIAL, MECANUM };
-    enum Wheel { FRONT_LEFT, FRONT_RIGHT, REAR_LEFT, REAR_RIGHT };
+    enum SC_Wheel { FRONT_LEFT, FRONT_RIGHT, REAR_LEFT, REAR_RIGHT, LEFT_WHEEL, RIGHT_WHEEL };
 }
 
 #endif //SC_DATATYPES_H

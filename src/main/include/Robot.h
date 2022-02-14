@@ -7,14 +7,16 @@
 #include <frc/TimedRobot.h>
 #include <frc2/command/Command.h>
 
-#include "RobotContainer.h"
-
-#include <frc/XboxController.h>
-#include "subsystems/Drivetrain.h"
 #include "FRC3484_Lib/utils/SC_Datatypes.h"
 
+#include "RobotContainer.h"
 
+#include "subsystems/X20B/X20B_Drivetrain.h"
+#include "subsystems/X22/X22_Drivetrain.h"
+
+#include <frc/XboxController.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableValue.h>
 
@@ -39,10 +41,8 @@ class Robot : public frc::TimedRobot {
   frc2::Command* m_autonomousCommand = nullptr;
 
   RobotContainer m_container;
-  Drivetrain *drivetrain;
+  //X20B_Drivetrain *X20B_drivetrain;
+  X22_Drivetrain *x22_drive;
 
   XboxController  *GP1_Driver, *GP2_GameDevice; // GP = Gamepad
-
-  double motorOutput;
-  double ctrl_1_A0;
 };

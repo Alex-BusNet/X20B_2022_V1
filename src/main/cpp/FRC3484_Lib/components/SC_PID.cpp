@@ -90,19 +90,19 @@ SC_PID::~SC_PID()
 
 void SC_PID::SetPIDConstants(SC_PIDConstants PIDc)
 {
-    this->Kp = F_Limit(0.0, 100.0, ABS(PIDc.Kp));
-    this->Ki = F_Limit(0.0, 100.0, ABS(PIDc.Ki));
-    this->Kd = F_Limit(0.0, 100.0, ABS(PIDc.Kd));
-    this->Kf = F_Limit(0.0, 100.0, ABS(PIDc.Kf));
+    this->Kp = F_Limit(0.0, 100.0, std::abs(PIDc.Kp));
+    this->Ki = F_Limit(0.0, 100.0, std::abs(PIDc.Ki));
+    this->Kd = F_Limit(0.0, 100.0, std::abs(PIDc.Kd));
+    this->Kf = F_Limit(0.0, 100.0, std::abs(PIDc.Kf));
     this->SetAntiWindupCoeff(); 
 }
 
 void SC_PID::SetPIDConstants(double nKp, double nKi, double nKd, double nKf)
 {
-    this->Kp = F_Limit(0.0, 100.0, ABS(nKp));
-    this->Ki = F_Limit(0.0, 100.0, ABS(nKi));
-    this->Kd = F_Limit(0.0, 100.0, ABS(nKd));
-    this->Kf = F_Limit(0.0, 100.0, ABS(nKf));
+    this->Kp = F_Limit(0.0, 100.0, std::abs(nKp));
+    this->Ki = F_Limit(0.0, 100.0, std::abs(nKi));
+    this->Kd = F_Limit(0.0, 100.0, std::abs(nKd));
+    this->Kf = F_Limit(0.0, 100.0, std::abs(nKf));
     this->SetAntiWindupCoeff(); 
 }
 

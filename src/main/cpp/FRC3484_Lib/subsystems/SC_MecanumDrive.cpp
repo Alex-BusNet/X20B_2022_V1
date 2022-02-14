@@ -77,7 +77,7 @@ ChassisSpeeds SC_MecanumDrive::GetChassisSpeed()
     return chassis;
 }
 
-double SC_MecanumDrive::GetWheelOutput(SC::Wheel wheelIdx)
+double SC_MecanumDrive::GetWheelOutput(SC::SC_Wheel wheelIdx)
 {
     units::scalar_t out = 0;
 

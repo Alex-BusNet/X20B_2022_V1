@@ -36,7 +36,7 @@ namespace SC
         
         frc::ChassisSpeeds GetChassisSpeed();
 
-        double GetWheelOutput(SC::Wheel wheelIdx);
+        double GetWheelOutput(SC::SC_Wheel wheelIdx);
 
     private:
         frc::ChassisSpeeds chassis;

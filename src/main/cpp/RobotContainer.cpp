@@ -7,13 +7,6 @@
 
 RobotContainer::RobotContainer() : m_autonomousCommand(&m_subsystem) {
   // Initialize all of your commands and subsystems here
-  dt = new Drivetrain(std::make_tuple<int, int>(C_SRX_FR_CIM, C_SRX_FR_MINI),
-                      std::make_tuple<int, int>(C_SRX_FL_CIM, C_SRX_FL_MINI), 
-                      std::make_tuple<int, int>(C_SRX_BR_CIM, C_SRX_BR_MINI), 
-                      std::make_tuple<int, int>(C_SRX_BL_CIM, C_SRX_BL_MINI), 
-                      C_DRIVE_SOL);
-
-
 
   // Configure the button bindings
   ConfigureButtonBindings();

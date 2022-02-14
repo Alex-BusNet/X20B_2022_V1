@@ -2,6 +2,7 @@
 #define SC_FUNCTIONS_H
 
 #include "FRC3484_Lib/utils/SC_Datatypes.h"
+#include "units/base.h"
 
 namespace SC
 {
@@ -21,16 +22,6 @@ namespace SC
      *          input is returned unmodified if it is
      *          along (fmin, fmax).
      */
-
-    /*
-    template<class T>
-    T F_Limit(T fmin, T fmax, T fin);
-
-
-    template<class T>
-    T F_Limit(SC_Range<T> valRange, T fin);
-    */
-
     template<class T>
     T F_Limit(T fmin, T fmax, T fin)
     {
@@ -38,16 +29,25 @@ namespace SC
         // larger than fmax, we want to reverse which
         // one is treated as the larger or smaller value
         if(fmin > fmax)
-            return std::max(fmax, std::min(fmin, fin));
+        {
+            if(fin > fmin) return fmin;
+            else if(fin < fmax) return fmax;
+            else return fin; 
+        }   
         else
-            return std::max(fmin, std::min(fmax, fin));
-
+        {
+            if(fin > fmax) return fmax;
+            else if(fin < fmin) return fmin;
+            else return fin; 
+        }
     }
 
     template<class T>
     T F_Limit(SC::SC_Range<T> valRange, T fin)
     {
-        return std::max(valRange.Val_min, std::min(valRange.Val_max, fin));
+        if(fin > valRange.Val_max) return valRange.Val_max;
+        else if(fin < valRange.Val_min) return valRange.Val_min;
+        else return fin; 
     }
 
     /**
@@ -126,13 +126,12 @@ namespace SC
     template<class T1, class T2>
     T2 F_Scale(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
     {
-        if((InMax - InMin) != 0)
+        if(InMax != InMin)
         {
-            T2 result = (((fin -InMin)/ (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
+            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
             return SC::F_Limit(OutMin, OutMax, result);
         }
-        else
-            return 0;    
+        else { return 0; }
     }
 
     template<class T1, class T2>
@@ -153,6 +152,43 @@ namespace SC
     {
         return SC::F_Scale(InRange.Val_min, InRange.Val_max, OutRange.Val_min, OutRange.Val_max, fin);
     }
+    
+    /*
+    template<class T1, class T2>
+    T2 F_ScaleUnit(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
+    {
+        if(InMax != InMin)
+        {
+            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
+            return SC::F_Limit(OutMin, OutMax, result);
+        }
+        else { return 0; }
+    }
+
+    template<units::unit_t T1, double T2>
+    T2 F_ScaleUnit(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
+    {
+        if(InMax != InMin)
+        {
+            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
+            return SC::F_Limit(OutMin, OutMax, result);
+        }
+        else
+            return 0;
+    }
+    
+    template<typename T1, class T2>
+    T2 F_ScaleUnit(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
+    {
+        if(InMax != InMin)
+        {
+            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
+            return SC::F_Limit(OutMin, OutMax, result);
+        }
+        else
+            return 0;
+    }
+    */
 
     //=================
     // Misc. Functions
@@ -216,7 +252,7 @@ namespace SC
     template<class T>
     T F_Deadband(T fin, T deadband)
     {
-        return (fin >= deadband) ? fin : 0;
+        return (std::abs(fin) >= deadband) ? fin : 0;
     }
 }
 #endif // SC_FUNCTIONS_H
