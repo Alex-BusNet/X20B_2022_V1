@@ -128,7 +128,8 @@ namespace SC
     {
         if(InMax != InMin)
         {
-            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
+            // T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
+            T2 result = (OutMax - OutMin) / (InMax - InMin) * (fin - InMin) + OutMin;
             return SC::F_Limit(OutMin, OutMax, result);
         }
         else { return 0; }

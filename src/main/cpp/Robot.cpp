@@ -14,14 +14,13 @@
 
 void Robot::RobotInit() 
 {
-  GP1_Driver = new XboxController(/*USB Port*/ 0);
-  GP2_GameDevice = new XboxController(/*USB Port*/ 1);
+	GP1_Driver = new XboxController(/*USB Port*/ 0);
+	GP2_GameDevice = new XboxController(/*USB Port*/ 1);
 
-  
-  x22_drive = new X22_Drivetrain(X22_TRACK_WIDTH, 14_fps, 90_deg_per_s,
-                                 std::make_tuple<int, int>(C_FX_LEFT_MASTER, C_FX_LEFT_SLAVE),
-                                 std::make_tuple<int, int>(C_FX_RIGHT_MASTER, C_FX_RIGHT_SLAVE),
-                                 SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::CTREPCM, C_DRIVE_SOL});
+  	x22_drive = new X22_Drivetrain(X22_TRACK_WIDTH, 14_fps, 90_deg_per_s,
+                                   std::make_tuple<int, int>(C_FX_LEFT_MASTER, C_FX_LEFT_SLAVE),
+                                   std::make_tuple<int, int>(C_FX_RIGHT_MASTER, C_FX_RIGHT_SLAVE),
+                                   SC::SC_DoubleSolenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_DRIVE_SOL, 1});
 }
 
 /**
@@ -33,7 +32,7 @@ void Robot::RobotInit()
  * LiveWindow and SmartDashboard integrated updating.
  */
 void Robot::RobotPeriodic() {
-  frc2::CommandScheduler::GetInstance().Run();
+	frc2::CommandScheduler::GetInstance().Run();
 }
 
 /**
@@ -50,11 +49,11 @@ void Robot::DisabledPeriodic() {}
  * RobotContainer} class.
  */
 void Robot::AutonomousInit() {
-  m_autonomousCommand = m_container.GetAutonomousCommand();
+	m_autonomousCommand = m_container.GetAutonomousCommand();
 
-  if (m_autonomousCommand != nullptr) {
-    m_autonomousCommand->Schedule();
-  }
+	if (m_autonomousCommand != nullptr) {
+		m_autonomousCommand->Schedule();
+	}
 }
 
 void Robot::AutonomousPeriodic() {}
@@ -64,10 +63,10 @@ void Robot::TeleopInit() {
   // teleop starts running. If you want the autonomous to
   // continue until interrupted by another command, remove
   // this line or comment it out.
-  if (m_autonomousCommand != nullptr) {
-    m_autonomousCommand->Cancel();
-    m_autonomousCommand = nullptr;
-  }
+	if (m_autonomousCommand != nullptr) {
+		m_autonomousCommand->Cancel();
+		m_autonomousCommand = nullptr;
+	}
 
 }
 
@@ -77,7 +76,8 @@ void Robot::TeleopInit() {
 void Robot::TeleopPeriodic() 
 {
 	x22_drive->Drive(SC::F_Deadband(-GP1_Driver->GetLeftY(), C_DRIVE_DEADBAND),
-						        SC::F_Deadband(GP1_Driver->GetLeftX(), C_DRIVE_DEADBAND));
+					 SC::F_Deadband(GP1_Driver->GetLeftX(), C_DRIVE_DEADBAND),
+                   	 GP1_Driver->GetAButton());
   
 }
 
