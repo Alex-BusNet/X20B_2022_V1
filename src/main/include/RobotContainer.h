@@ -6,14 +6,12 @@
 
 #include <frc2/command/Command.h>
 
-
-
 #include "commands/ExampleCommand.h"
 #include "subsystems/X20B/ExampleSubsystem.h"
 
-#include "subsystems/X20B/Launcher.h"
-#include "subsystems/X20B/Turret.h"
-#include "subsystems/X20B/X20B_Drivetrain.h"
+// #include "subsystems/X20B/Launcher.h"
+// #include "subsystems/X20B/Turret.h"
+// #include "subsystems/X20B/X20B_Drivetrain.h"
 
 
 /**
@@ -34,10 +32,11 @@ class RobotContainer {
   ExampleSubsystem m_subsystem;
   ExampleCommand m_autonomousCommand;
 
-  X20B_Drivetrain  *dt;
-  Launcher    *launch;
-  Turret      *turret;
+  // X20B_Drivetrain  *dt;
+  // Launcher    *launch;
+  // Turret      *turret;
   
+
 
   void ConfigureButtonBindings();
 };
