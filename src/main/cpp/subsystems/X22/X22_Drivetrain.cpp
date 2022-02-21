@@ -13,95 +13,55 @@ using namespace ctre::phoenix::motorcontrol::can;
 using namespace ctre::phoenix::motorcontrol;
 
 X22_Drivetrain::X22_Drivetrain(inch_t trackwidth, feet_per_second_t MaxTangVel, degrees_per_second_t MaxRotVel,
-                               std::tuple<int, int> LeftIDs, std::tuple<int, int> RightIDs, SC_DoubleSolenoid Shifter)
+							   std::tuple<int, int> LeftIDs, std::tuple<int, int> RightIDs, SC_DoubleSolenoid Shifter)
 {
-    // drive = new SC_DifferentialDrive(trackwidth, MaxTangVel, MaxRotVel);
-    this->_InitDashboard(); 
+	// drive = new SC_DifferentialDrive(trackwidth, MaxTangVel, MaxRotVel);
+	this->_InitDashboard(); 
 
-    _linVelRange(-MaxTangVel.value(), MaxTangVel.value());
-    _angVelRange(-MaxRotVel.value(), MaxRotVel.value());
+	_linVelRange(-MaxTangVel.value(), MaxTangVel.value());
+	_angVelRange(-MaxRotVel.value(), MaxRotVel.value());
 
 	this->_ws_filter_left = new SC_ABFilter<meters_per_second_t>(C_DT_WHEEL_TAU, C_SCAN_TIME);
 	this->_ws_filter_right = new SC_ABFilter<meters_per_second_t>(C_DT_WHEEL_TAU, C_SCAN_TIME);
 
-    int sCh = -1;
+	int sCh = -1;
 
-    // Initialize front right wheel and slave controller
-    if(LeftIDs != C_BLANK_IDS) 
-    { 
-        Motor_Left_Master = new WPI_TalonFX(std::get<0>(LeftIDs));
-        Motor_Left_Master->SetInverted(true);
-        Motor_Left_Master->SetNeutralMode(NeutralMode::Coast);
-        Motor_Left_Master->ConfigOpenloopRamp(2);
-		Motor_Left_Master->ConfigClosedloopRamp(0);
-		Motor_Left_Master->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-		Motor_Left_Master->SetSelectedSensorPosition(0);
+	// Initialize front right wheel and slave controller
+	if(LeftIDs != C_BLANK_IDS) 
+	{ 
+		Motor_Left_Master = new WPI_TalonFX(std::get<0>(LeftIDs));
+		_InitMotor(Motor_Left_Master, true);
 
-        sCh = std::get<1>(LeftIDs);
+		sCh = std::get<1>(LeftIDs);
 
-        if(sCh > -1)
-        {
-            Motor_Left_Slave = new WPI_TalonFX(sCh);
-            Motor_Left_Slave->Follow(*Motor_Left_Master);
-			Motor_Left_Slave->SetInverted(true);
-       		Motor_Left_Master->ConfigOpenloopRamp(2);
-			Motor_Left_Slave->ConfigClosedloopRamp(0);
-			Motor_Left_Slave->SetNeutralMode(NeutralMode::Coast);
-        }
-        else
-        {
-            Motor_Left_Slave = nullptr;
-        }
-    } 
-    else
-    {
-        Motor_Left_Master = nullptr;
-        Motor_Left_Slave = nullptr;
-    }
-    
+		if(sCh > -1) { Motor_Left_Slave = new WPI_TalonFX(sCh); _InitMotor(Motor_Left_Slave, true, Motor_Left_Master); }
+		else { Motor_Left_Slave = NULL; }
+	} 
+	else { Motor_Left_Master = NULL; Motor_Left_Slave = NULL; }
+	
 
-    // Initialize front left wheel and slave controller
-     if(RightIDs != C_BLANK_IDS) 
-    { 
-        Motor_Right_Master = new WPI_TalonFX(std::get<0>(RightIDs));
-        Motor_Right_Master->SetInverted(false);
-        Motor_Right_Master->SetNeutralMode(NeutralMode::Coast);
-        Motor_Right_Master->ConfigOpenloopRamp(2);
-		Motor_Right_Master->ConfigClosedloopRamp(0);
-		Motor_Right_Master->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-		Motor_Right_Master->SetSelectedSensorPosition(0);
+	// Initialize front left wheel and slave controller
+	 if(RightIDs != C_BLANK_IDS) 
+	{ 
+		Motor_Right_Master = new WPI_TalonFX(std::get<0>(RightIDs));
+		_InitMotor(Motor_Right_Master, false);
 
-        sCh = std::get<1>(RightIDs);
+		sCh = std::get<1>(RightIDs);
 
-        if(sCh > -1)
-        {
-            Motor_Right_Slave = new WPI_TalonFX(sCh);
-            Motor_Right_Slave->Follow(*Motor_Right_Master);
-			Motor_Right_Slave->SetInverted(false);
-        	Motor_Right_Master->ConfigOpenloopRamp(2);
-			Motor_Right_Master->ConfigClosedloopRamp(0);
-			Motor_Right_Slave->SetNeutralMode(NeutralMode::Coast);
-        }
-        else
-        {
-            Motor_Right_Slave = nullptr;
-        }
-    } 
-    else
-    {
-        Motor_Right_Master = nullptr;
-        Motor_Right_Slave = nullptr;
-    }
-    
-    drive = new DifferentialDrive(*Motor_Left_Master, *Motor_Right_Master);
+		if(sCh > -1) { Motor_Right_Slave = new WPI_TalonFX(sCh); _InitMotor(Motor_Right_Slave, false, Motor_Right_Master); }
+		else { Motor_Right_Slave = NULL; }
+	} 
+	else { Motor_Right_Master = NULL; Motor_Right_Slave = NULL; }
+	
+	drive = new DifferentialDrive(*Motor_Left_Master, *Motor_Right_Master);
 	ddKinematics = new DifferentialDriveKinematics(trackwidth);
 
-    if(Shifter.Fwd_Channel != -1) 
+	if(Shifter.Fwd_Channel != -1) 
 	{ 
 		_shifter = new DoubleSolenoid(Shifter.CtrlID, Shifter.CtrlType, Shifter.Fwd_Channel, Shifter.Rev_Channel);
 		Shift(true, false);
 	}
-    else { _shifter = nullptr; }
+	else { _shifter = NULL; }
 }
 
 X22_Drivetrain::~X22_Drivetrain()
@@ -148,20 +108,23 @@ X22_Drivetrain::~X22_Drivetrain()
 
 void X22_Drivetrain::Drive(double Throttle, double Rotation, bool ShiftOverride)
 {
-	this->throttleCoeff = ntThrottleScale->GetNumber(C_THROTTLE_SCALE_COEFF);
+	if(ntThrottleScale != NULL) { this->throttleCoeff = ntThrottleScale->GetNumber(C_THROTTLE_SCALE_COEFF); }
+	else {this->throttleCoeff = C_THROTTLE_SCALE_COEFF; }
 
-    this->throttleDemand = std::copysign(std::min((Throttle*Throttle)*this->throttleCoeff, std::abs(Throttle)), Throttle);
-    this->rotationDemand = Rotation;
-    
+	this->throttleDemand = std::copysign(std::min((Throttle*Throttle)*this->throttleCoeff, std::abs(Throttle)), Throttle);
+	this->rotationDemand = Rotation;
+	
 	// if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime.GetDouble(2.0)); }
 	// if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime.GetDouble(2.0)); }
+	if(ntRampTime != NULL)
+	{
+		if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Left_Slave != NULL) { Motor_Left_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Right_Slave != NULL) { Motor_Right_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+	}
 
-	if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-	if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-	if(Motor_Left_Slave != NULL) { Motor_Left_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-	if(Motor_Right_Slave != NULL) { Motor_Right_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-
-	if(drive != NULL)
+	if((drive != NULL) && (Motor_Left_Master != NULL) && (Motor_Right_Master != NULL))
 	{
 	   	// Convert driver inputs to drivetrain outputs
 		wsInput = drive->ArcadeDriveIK(this->throttleDemand , -Rotation, false);
@@ -169,35 +132,39 @@ void X22_Drivetrain::Drive(double Throttle, double Rotation, bool ShiftOverride)
 		ws_PV.left = units::make_unit<feet_per_second_t>(_CalcWheelVelocity(Motor_Left_Master->GetSelectedSensorVelocity(0)));
 		ws_PV.right = units::make_unit<feet_per_second_t>(_CalcWheelVelocity(Motor_Right_Master->GetSelectedSensorVelocity(0)));
 
-		// Apply Alpha-Beta filter to smooth out encoder feedback
-		ws_PVf.left = this->_ws_filter_left->Filter(ws_PV.left);
-		ws_PVf.right = this->_ws_filter_right->Filter(ws_PV.right);
+		if((_ws_filter_left != NULL) && (_ws_filter_right != NULL) && (ddKinematics != NULL))
+		{
+			// Apply Alpha-Beta filter to smooth out encoder feedback
+			ws_PVf.left = this->_ws_filter_left->Filter(ws_PV.left);
+			ws_PVf.right = this->_ws_filter_right->Filter(ws_PV.right);
 
-		cs_PV = ddKinematics->ToChassisSpeeds(ws_PVf);
+			cs_PV = ddKinematics->ToChassisSpeeds(ws_PVf);
+		}
+		else { cs_PV.vx = ws_PV.left; cs_PV.vy = 0.0_mps; cs_PV.omega = 0.0_rad_per_s; }
 
 		// Auto-shifting logic
-        Shift(ShiftOverride || (units::math::abs(cs_PV.vx) < C_SHIFT_DOWN_SPEED),
+		Shift(ShiftOverride || (units::math::abs(cs_PV.vx) < C_SHIFT_DOWN_SPEED),
 			 !ShiftOverride && (units::math::abs(cs_PV.vx) > C_SHIFT_UP_SPEED));
 
-		// Set motor outputs
+		// Set motor outputs (direct control)
 		Motor_Left_Master->Set(ControlMode::PercentOutput, wsInput.left);
 		Motor_Right_Master->Set(ControlMode::PercentOutput, wsInput.right);
 
 		// Send subsystem data to the dashboard
-        this->_UpdateDashboard();
+		this->_UpdateDashboard();
 
 		// Handle motor safety
-        drive->Feed();
-        drive->FeedWatchdog();
-    }
+		drive->Feed();
+		drive->FeedWatchdog();
+	}
 }
 
 void X22_Drivetrain::Shift(bool ShiftLow, bool ShiftHigh)
 {
-    if(_shifter != NULL)
-    {
-        _shifter->Set((ShiftHigh && !ShiftLow) ? DoubleSolenoid::kForward : DoubleSolenoid::kReverse);
-    }
+	if(_shifter != NULL)
+	{
+		_shifter->Set((ShiftHigh && !ShiftLow) ? DoubleSolenoid::kForward : DoubleSolenoid::kReverse);
+	}
 
 	inLowGear = ShiftLow;
 	inHighGear = ShiftHigh;	
@@ -212,39 +179,39 @@ double X22_Drivetrain::_CalcWheelVelocity(double counts)
 
 void X22_Drivetrain::_UpdateDashboard()
 {
-	ntThrottleIn->SetNumber(this->throttleDemand);
-	ntRotationIn->SetNumber(this->rotationDemand);
+	if(ntThrottleIn != NULL) { ntThrottleIn->SetNumber(this->throttleDemand); }
+	if(ntRotationIn != NULL) { ntRotationIn->SetNumber(this->rotationDemand); }
 	
-	ntLeftOut->SetNumber(this->wsInput.left);
-	ntRightOut->SetNumber(this->wsInput.right);
+	if(ntLeftOut != NULL) { ntLeftOut->SetNumber(this->wsInput.left); }
+	if(ntRightOut != NULL) { ntRightOut->SetNumber(this->wsInput.right); }
 
-	ntLeftVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.left).value());
-	ntRightVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.right).value());
+	if(ntLeftVel != NULL) { ntLeftVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.left).value()); }
+	if(ntRightVel != NULL) { ntRightVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.right).value()); }
 
-	ntChassisVx->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vx).value());
-	ntChassisVy->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vy).value());
-	ntChassisOmega->SetNumber(units::convert<radians_per_second, degrees_per_second>(cs_PV.omega).value());
+	if(ntChassisVx != NULL) { ntChassisVx->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vx).value()); }
+	if(ntChassisVy != NULL) { ntChassisVy->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vy).value()); }
+	if(ntChassisOmega != NULL) { ntChassisOmega->SetNumber(units::convert<radians_per_second, degrees_per_second>(cs_PV.omega).value()); }
 
-	ntInLowGear->SetBool(this->inLowGear);
-	ntInHighGear->SetBool(this->ntInHighGear);
+	if(ntInLowGear != NULL) { ntInLowGear->SetBool(this->inLowGear); }
+	if(ntInHighGear != NULL) { ntInHighGear->SetBool(this->ntInHighGear); }
 
 	/*
 	ntThrottleIn.SetDouble(this->throttleDemand);
 	ntRotationIn.SetDouble(this->rotationDemand);
 
-    ntLeftOut.SetDouble(wsInput.left);
-    ntRightOut.SetDouble(wsInput.right);
+	ntLeftOut.SetDouble(wsInput.left);
+	ntRightOut.SetDouble(wsInput.right);
 
-    ntLeftEnc_Raw.SetDouble(Motor_Left_Master->GetSelectedSensorVelocity(0));
-    ntRightEnc_Raw.SetDouble(Motor_Right_Master->GetSelectedSensorVelocity(0));
+	ntLeftEnc_Raw.SetDouble(Motor_Left_Master->GetSelectedSensorVelocity(0));
+	ntRightEnc_Raw.SetDouble(Motor_Right_Master->GetSelectedSensorVelocity(0));
 
-    ntLeftVel.SetDouble(units::convert<meters_per_second, feet_per_second>(ws_PV.left).value());
-    ntRightVel.SetDouble(units::convert<meters_per_second, feet_per_second>(ws_PV.right).value());
-    ntChassisVx.SetDouble(units::convert<meters_per_second, feet_per_second>(cs_PV.vx).value());
-    ntChassisVy.SetDouble(units::convert<meters_per_second, feet_per_second>(cs_PV.vy).value());
-    ntChassisOmega.SetDouble(units::convert<radians_per_second, degrees_per_second>(cs_PV.omega).value());
+	ntLeftVel.SetDouble(units::convert<meters_per_second, feet_per_second>(ws_PV.left).value());
+	ntRightVel.SetDouble(units::convert<meters_per_second, feet_per_second>(ws_PV.right).value());
+	ntChassisVx.SetDouble(units::convert<meters_per_second, feet_per_second>(cs_PV.vx).value());
+	ntChassisVy.SetDouble(units::convert<meters_per_second, feet_per_second>(cs_PV.vy).value());
+	ntChassisOmega.SetDouble(units::convert<radians_per_second, degrees_per_second>(cs_PV.omega).value());
 
-    ntInLowGear.SetBoolean(inLowGear);
+	ntInLowGear.SetBoolean(inLowGear);
 	ntInHighGear.SetBoolean(inHighGear);
 	*/
 }
@@ -343,4 +310,16 @@ void X22_Drivetrain::_InitDashboard()
 					.WithWidget(BuiltInWidgets::kTextView)
 					.GetEntry();
 	*/
+}
+
+void X22_Drivetrain::_InitMotor(WPI_TalonFX* Motor, bool Invert, WPI_TalonFX* Master)
+{
+	Motor->SetInverted(Invert);
+	Motor->SetNeutralMode(NeutralMode::Coast);
+	Motor->ConfigOpenloopRamp(2);
+	Motor->ConfigClosedloopRamp(0);
+	Motor->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+	Motor->SetSelectedSensorPosition(0);
+
+	if(Master != NULL) { Motor->Follow(*Master); }
 }

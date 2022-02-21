@@ -51,6 +51,7 @@ private:
 
     void _UpdateDashboard();
     void _InitDashboard();
+    void _InitMotor(ctre::phoenix::motorcontrol::can::WPI_TalonFX* Motor, bool Invert, ctre::phoenix::motorcontrol::can::WPI_TalonFX* Master = NULL);
 
     //SC::SC_DifferentialDrive *drive;
     frc::DifferentialDrive              *drive;

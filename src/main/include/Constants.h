@@ -47,6 +47,7 @@ const double C_GEAR_RATIO_LO		= 1.0 / 18.0;
 const double C_GEAR_RATIO_HI		= 1.0 / 9.56;
 
 const double C_DT_MOTOR_MAX_RPM		= 6380.0;
+const double C_DT_MOTOR_MAX_RPM_ACT = 6000.0; // TODO: Get max achievable RPM of drivetrain motors.
 const double C_DT_ENC_CPR			= 2048.0;
 
 const double C_MAX_GEAR_ENC_LO      = (C_DT_MOTOR_MAX_RPM / 600.0) * (C_DT_ENC_CPR / C_GEAR_RATIO_LO);
