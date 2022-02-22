@@ -12,12 +12,14 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/CommandScheduler.h>
 
+using namespace SC;
+
 void Robot::RobotInit() 
 {
 	GP1_Driver = new XboxController(/*USB Port*/ 0);
 	GP2_GameDevice = new XboxController(/*USB Port*/ 1);
 
-  	x22_drive = new X22_Drivetrain(X22_TRACK_WIDTH, 14_fps, 90_deg_per_s,
+  	x22_drive = new X22_Drivetrain(C_X22_TRACK_WIDTH, C_HI_GEAR_MAX_SPEED, 90_deg_per_s,
                                    std::make_tuple<int, int>(C_FX_LEFT_MASTER, C_FX_LEFT_SLAVE),
                                    std::make_tuple<int, int>(C_FX_RIGHT_MASTER, C_FX_RIGHT_SLAVE),
                                    SC::SC_DoubleSolenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_DRIVE_SOL, 1});
@@ -75,9 +77,29 @@ void Robot::TeleopInit() {
  */
 void Robot::TeleopPeriodic() 
 {
-	x22_drive->Drive(SC::F_Deadband(-GP1_Driver->GetLeftY(), C_DRIVE_DEADBAND),
-					 SC::F_Deadband(GP1_Driver->GetLeftX(), C_DRIVE_DEADBAND),
-                   	 GP1_Driver->GetAButton());
+	if(GP1_Driver->GetRightBumper())
+	{
+		// Fine control mode; Scales driver input to smaller range for finer control
+		throttleDemand = F_Scale(-100.0, 100.0, Throttle_Range_Fine, -GP1_Driver->GetLeftY());
+		turnDemand = F_Scale(-100.0, 100.0, Throttle_Range_Fine, GP1_Driver->GetLeftX());
+	}
+	else
+	{
+		// Normal control mode
+		// throttleDemand = F_Scale(-100.0, 100.0, Throttle_Range_Normal, -GP1_Driver->GetLeftY());
+		// turnDemand = F_Scale(-100.0, 100.0, Throttle_Range_Normal, GP1_Driver->GetLeftX());
+		throttleDemand = -GP1_Driver->GetLeftY();
+		turnDemand = GP1_Driver->GetLeftX();
+
+	}
+
+	forceLowGear = GP1_Driver->GetAButton() || GP1_Driver->GetRightBumper();
+
+	x22_drive->Drive(SC::F_Deadband(throttleDemand, C_DRIVE_DEADBAND),
+					 SC::F_Deadband(turnDemand, C_DRIVE_DEADBAND),
+                   	 forceLowGear);
+
+
   
 }
 

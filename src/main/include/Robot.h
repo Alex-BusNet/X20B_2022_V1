@@ -11,7 +11,6 @@
 
 #include "RobotContainer.h"
 
-#include "subsystems/X20B/X20B_Drivetrain.h"
 #include "subsystems/X22/X22_Drivetrain.h"
 
 #include <frc/XboxController.h>
@@ -41,8 +40,13 @@ class Robot : public frc::TimedRobot {
   frc2::Command* m_autonomousCommand = nullptr;
 
   RobotContainer m_container;
-  //X20B_Drivetrain *X20B_drivetrain;
   X22_Drivetrain *x22_drive;
+
+  SC::SC_Range<double> Throttle_Range_Normal = {-C_DRIVE_MAX_DEMAND, C_DRIVE_MAX_DEMAND};
+  SC::SC_Range<double> Throttle_Range_Fine = {-C_DRIVE_MAX_DEMAND_FINE, C_DRIVE_MAX_DEMAND_FINE};
+
+  double throttleDemand, turnDemand;
+  double forceLowGear;
 
   XboxController  *GP1_Driver, *GP2_GameDevice; // GP = Gamepad
 };

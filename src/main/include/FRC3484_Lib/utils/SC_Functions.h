@@ -153,43 +153,6 @@ namespace SC
     {
         return SC::F_Scale(InRange.Val_min, InRange.Val_max, OutRange.Val_min, OutRange.Val_max, fin);
     }
-    
-    /*
-    template<class T1, class T2>
-    T2 F_ScaleUnit(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
-    {
-        if(InMax != InMin)
-        {
-            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
-            return SC::F_Limit(OutMin, OutMax, result);
-        }
-        else { return 0; }
-    }
-
-    template<units::unit_t T1, double T2>
-    T2 F_ScaleUnit(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
-    {
-        if(InMax != InMin)
-        {
-            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
-            return SC::F_Limit(OutMin, OutMax, result);
-        }
-        else
-            return 0;
-    }
-    
-    template<typename T1, class T2>
-    T2 F_ScaleUnit(T1 InMin, T1 InMax, T2 OutMin, T2 OutMax, T1 fin)
-    {
-        if(InMax != InMin)
-        {
-            T2 result = (((fin - InMin) / (InMax - InMin)) * (OutMax - OutMin)) + OutMin;
-            return SC::F_Limit(OutMin, OutMax, result);
-        }
-        else
-            return 0;
-    }
-    */
 
     //=================
     // Misc. Functions
