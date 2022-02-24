@@ -11,17 +11,20 @@
 class X22_Intake
 {
 public:
-    X22_Intake(int MotorID, SC::SC_Solenoid Sol, int ProxSen1_Ch, int ProxSen2_Ch);
+    X22_Intake(int IntakeID, int FeedID_Master, int FeedID_Slave, SC::SC_Solenoid Sol, int ProxSen_Ch);
     ~X22_Intake();
 
+    void Collect(bool Run);
 
 private:
-    ctre::phoenix::motorcontrol::can::VictorSPX Motor_Master;
-    frc::Solenoid Sol_1;
+    ctre::phoenix::motorcontrol::can::VictorSPX *Motor_Intake_Master;
+    ctre::phoenix::motorcontrol::can::VictorSPX *Motor_Feed_Master;
+    ctre::phoenix::motorcontrol::can::VictorSPX *Motor_Feed_Slave;
+    frc::Solenoid *Sol_1;
 
-    frc::DigitalInput DI_Prox;
+    frc::DigitalInput *DI_Prox;
 
 };
 
 
-#endif
+#endif // X22_INTAKE_H

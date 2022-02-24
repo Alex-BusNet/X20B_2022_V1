@@ -22,13 +22,27 @@
 #define C_FX_LEFT_SLAVE				2
 #define C_FX_RIGHT_MASTER			3
 #define C_FX_RIGHT_SLAVE			4
+#define C_SPX_INTAKE                5
+#define C_SPX_FEED_MASTER           6
+#define C_SPX_FEED_SLAVE            7
+#define C_FX_LAUNCH_1               8
+#define C_FX_LAUNCH_2               9
+#define C_SPX_TURRET                10
+#define C_SRX_CLIMB                 12 // Usage TBD
 
 /* Other CAN ID's */
 #define C_PCM						0
-#define C_PDP						14
+#define C_PDP						11
 
 /* Solenoid Channels */
 #define C_DRIVE_SOL					0 // Shifter
+#define C_SOL_INTAKE                1
+#define C_SOL_LOADER                2
+#define C_SOL_LAUNCH_ANGLE          3
+#define C_SOL_CLIMB_VERT_UD         4
+#define C_SOL_CLIMB_VERT_CLAW       5
+#define C_SOL_CLIMB_2ND_STAGE_UD    6
+#define C_SOL_CLIMB_2ND_STAGE_CLAW  7
 
 /* Settings */
 #define C_DRIVE_DEADBAND			0.05    // 5% Joystick input
@@ -66,6 +80,11 @@ const units::meters_per_second_t C_SHIFT_DOWN_SPEED 	= 3.5_fps;
 /* Turret Parameters */
 
 /* Intake Parameters */
+#define C_INTAKE_DRIVE_SPEED    0.5	// %
+#define C_INTAKE_RAMP_TIME		0.5 // Seconds
+#define C_FEED_DRIVE_SPEED      0.5 // %
+
+#define C_DI_CH_PROX_SEN        0
 
 /* General Constants */
 #define C_SCAN_TIME         10_ms

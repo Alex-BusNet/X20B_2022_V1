@@ -17,12 +17,22 @@ using namespace SC;
 void Robot::RobotInit() 
 {
 	GP1_Driver = new XboxController(/*USB Port*/ 0);
-	GP2_GameDevice = new XboxController(/*USB Port*/ 1);
+	BB_GameDevice = new GenericHID(/*USB Port*/ 1);
 
   	x22_drive = new X22_Drivetrain(C_X22_TRACK_WIDTH, C_HI_GEAR_MAX_SPEED, 90_deg_per_s,
                                    std::make_tuple<int, int>(C_FX_LEFT_MASTER, C_FX_LEFT_SLAVE),
                                    std::make_tuple<int, int>(C_FX_RIGHT_MASTER, C_FX_RIGHT_SLAVE),
                                    SC::SC_DoubleSolenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_DRIVE_SOL, 1});
+
+	x22_intake = new X22_Intake(C_SPX_INTAKE, 
+								C_SPX_FEED_MASTER, C_SPX_FEED_SLAVE, 
+								SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_INTAKE},
+								C_DI_CH_PROX_SEN);
+
+	x22_launcher = new X22_Launcher(C_FX_LAUNCH_1, C_FX_LAUNCH_2, C_SPX_TURRET,
+									SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_LOADER},
+									SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_LAUNCH_ANGLE},
+									frc::I2C::Port::kOnboard);
 }
 
 /**
@@ -77,6 +87,10 @@ void Robot::TeleopInit() {
  */
 void Robot::TeleopPeriodic() 
 {
+	/*======================*/
+	/*====Driver Controls===*/
+	/*======================*/
+
 	if(GP1_Driver->GetRightBumper())
 	{
 		// Fine control mode; Scales driver input to smaller range for finer control
@@ -86,11 +100,10 @@ void Robot::TeleopPeriodic()
 	else
 	{
 		// Normal control mode
-		// throttleDemand = F_Scale(-100.0, 100.0, Throttle_Range_Normal, -GP1_Driver->GetLeftY());
-		// turnDemand = F_Scale(-100.0, 100.0, Throttle_Range_Normal, GP1_Driver->GetLeftX());
-		throttleDemand = -GP1_Driver->GetLeftY();
-		turnDemand = GP1_Driver->GetLeftX();
-
+		throttleDemand = F_Scale(-100.0, 100.0, Throttle_Range_Normal, -GP1_Driver->GetLeftY());
+		turnDemand = F_Scale(-100.0, 100.0, Throttle_Range_Normal, GP1_Driver->GetLeftX());
+		// throttleDemand = -GP1_Driver->GetLeftY();
+		// turnDemand = GP1_Driver->GetLeftX();
 	}
 
 	forceLowGear = GP1_Driver->GetAButton() || GP1_Driver->GetRightBumper();
@@ -99,7 +112,13 @@ void Robot::TeleopPeriodic()
 					 SC::F_Deadband(turnDemand, C_DRIVE_DEADBAND),
                    	 forceLowGear);
 
+	/*===========================*/
+	/*====Game Device Controls===*/
+	/*===========================*/
 
+	x22_intake->Collect(BB_GameDevice->GetRawButton(1));
+
+	x22_launcher->Auto(BB_GameDevice->GetRawButton(2));
   
 }
 
