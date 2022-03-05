@@ -27,12 +27,14 @@ void Robot::RobotInit()
 	x22_intake = new X22_Intake(C_SPX_INTAKE, 
 								C_SPX_FEED_MASTER, C_SPX_FEED_SLAVE, 
 								SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_INTAKE},
-								C_DI_CH_PROX_SEN);
+								C_DI_CH_PROX_SEN, frc::I2C::Port::kOnboard);
 
 	x22_launcher = new X22_Launcher(C_FX_LAUNCH_1, C_FX_LAUNCH_2, C_SPX_TURRET,
 									SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_LOADER},
-									SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_LAUNCH_ANGLE},
-									frc::I2C::Port::kOnboard);
+									SC::SC_Solenoid{C_PCM, frc::PneumaticsModuleType::REVPH, C_SOL_LAUNCH_ANGLE});
+
+	Throttle_Range_Normal(-C_DRIVE_MAX_DEMAND, C_DRIVE_MAX_DEMAND);
+	Throttle_Range_Fine(-C_DRIVE_MAX_DEMAND_FINE, C_DRIVE_MAX_DEMAND_FINE);
 }
 
 /**
@@ -118,8 +120,9 @@ void Robot::TeleopPeriodic()
 
 	x22_intake->Collect(BB_GameDevice->GetRawButton(1));
 
-	x22_launcher->Auto(BB_GameDevice->GetRawButton(2));
-  
+	x22_launcher->Auto(BB_GameDevice->GetRawButton(2) && x22_intake->IsCargoLoaded());
+
+	x22_climb->Periodic();
 }
 
 /**

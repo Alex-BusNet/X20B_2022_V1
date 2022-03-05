@@ -7,7 +7,7 @@ using namespace frc;
 using namespace ctre::phoenix::motorcontrol;
 using namespace ctre::phoenix::motorcontrol::can;
 
-X22_Intake::X22_Intake(int IntakeID, int FeedID_Master, int FeedID_Slave, SC_Solenoid Sol, int ProxSen_Ch)
+X22_Intake::X22_Intake(int IntakeID, int FeedID_Master, int FeedID_Slave, SC_Solenoid Sol, int ProxSen_Ch, I2C::Port ColorSenPort)
 {
     Motor_Intake_Master = new VictorSPX(IntakeID);
     Motor_Intake_Master->SetNeutralMode(NeutralMode::Coast);
@@ -24,6 +24,8 @@ X22_Intake::X22_Intake(int IntakeID, int FeedID_Master, int FeedID_Slave, SC_Sol
     Sol_1->Set(false);
 
     DI_Prox = new DigitalInput(ProxSen_Ch);
+
+	this->_sen_loader = new SC_ColorSensor(ColorSenPort);
 
 }
 
@@ -44,5 +46,10 @@ void X22_Intake::Collect(bool Run)
     Motor_Intake_Master->Set(ControlMode::PercentOutput, (Run ? C_INTAKE_DRIVE_SPEED : 0.0));
 
     // Run the feeder when the Prox sensor detects there is no cargo loaded, and there is one in the feeder.
-    Motor_Feed_Master->Set(ControlMode::PercentOutput, (DI_Prox->Get() ? C_FEED_DRIVE_SPEED : 0.0));
+    Motor_Feed_Master->Set(ControlMode::PercentOutput, (((!this->IsCargoLoaded()) && DI_Prox->Get()) ? C_FEED_DRIVE_SPEED : 0.0));
+}
+
+bool X22_Intake::IsCargoLoaded()
+{
+    return this->_sen_loader->GetDistance() > 1500;
 }

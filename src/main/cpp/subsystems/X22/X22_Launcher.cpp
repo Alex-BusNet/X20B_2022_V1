@@ -1,11 +1,12 @@
 #include "subsystems/X22/X22_Launcher.h"
+#include "Constants.h"
 
 using namespace frc;
 using namespace SC;
 using namespace ctre::phoenix::motorcontrol::can;
 using namespace ctre::phoenix::motorcontrol;
 
-X22_Launcher::X22_Launcher(int CenterID, int OuterID, int TurretID, SC_Solenoid Loader, SC_Solenoid AngleCtrl, I2C::Port ColorSenPort)
+X22_Launcher::X22_Launcher(int CenterID, int OuterID, int TurretID, SC_Solenoid Loader, SC_Solenoid AngleCtrl)
 {
 	this->_launch_motor_center = new TalonFX(CenterID);
 	this->_launch_motor_outer = new TalonFX(OuterID);
@@ -15,7 +16,9 @@ X22_Launcher::X22_Launcher(int CenterID, int OuterID, int TurretID, SC_Solenoid 
 	this->_sol_loader = new Solenoid(Loader.CtrlID, Loader.CtrlType, Loader.Channel);
 	this->_sol_angle = new Solenoid(AngleCtrl.CtrlID, AngleCtrl.CtrlType, AngleCtrl.Channel);
 
-	this->_sen_loader = new SC_ColorSensor(ColorSenPort);
+	this->_vision = new SC_Limelight(C_LL_ANGLE, C_LL_HEIGHT);
+	this->_vision->SetTargetHeight(C_GOAL_HEIGHT);
+	this->_vision->SetLEDMode(SC_LEDMode::LED_OFF);
 
 	this->_center_PID = new SC_PID();
 	this->_outer_PID = new SC_PID();
@@ -62,6 +65,8 @@ void X22_Launcher::Auto(bool Run)
 			this->_outer_PID->EnableManualMode();
 			this->_outer_PID->SetCV(0.0); 
 		}
+
+		if(this->_vision != NULL) { this->_vision->SetLEDMode(SC_LEDMode::LED_OFF); }
 	}
 }
 
@@ -73,12 +78,6 @@ void X22_Launcher::SetCenterPIDTune(SC_PIDConstants PIDC)
 void X22_Launcher::SetOuterPIDTune(SC_PIDConstants PIDC)
 {
 	if(this->_outer_PID != NULL) { this->_outer_PID->SetPIDConstants(PIDC); }
-}
-
-bool X22_Launcher::_HasCargoInLoader()
-{
-	if(this->_sen_loader != NULL) { return this->_sen_loader->GetDistance() < 1000.0; } // TODO: Get sensor distance when cargo is present.
-	else { return false; }
 }
 
 void X22_Launcher::_SpoolFlywheel()

@@ -14,6 +14,7 @@
 #include "subsystems/X22/X22_Drivetrain.h"
 #include "subsystems/X22/X22_Intake.h"
 #include "subsystems/X22/X22_Launcher.h"
+#include "subsystems/X22/X22_Climb.h"
 
 #include <frc/XboxController.h>
 
@@ -44,9 +45,10 @@ class Robot : public frc::TimedRobot {
   X22_Drivetrain *x22_drive;
   X22_Intake *x22_intake;
   X22_Launcher *x22_launcher;
+  X22_Climb *x22_climb;
 
-  SC::SC_Range<double> Throttle_Range_Normal = {-C_DRIVE_MAX_DEMAND, C_DRIVE_MAX_DEMAND};
-  SC::SC_Range<double> Throttle_Range_Fine = {-C_DRIVE_MAX_DEMAND_FINE, C_DRIVE_MAX_DEMAND_FINE};
+  SC::SC_Range<double> Throttle_Range_Normal;
+  SC::SC_Range<double> Throttle_Range_Fine;
 
   double throttleDemand, turnDemand;
   double forceLowGear;

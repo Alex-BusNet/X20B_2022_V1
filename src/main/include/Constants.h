@@ -76,6 +76,10 @@ const units::meters_per_second_t C_SHIFT_UP_SPEED 		= 5.0_fps;
 const units::meters_per_second_t C_SHIFT_DOWN_SPEED 	= 3.5_fps;
 
 /* Launcher Parameters */
+#define C_LL_ANGLE				20.0 // deg
+#define C_LL_HEIGHT				24.0 // inches above floor
+const double C_GOAL_HEIGHT	  = 104.0; // inches		
+
 
 /* Turret Parameters */
 
