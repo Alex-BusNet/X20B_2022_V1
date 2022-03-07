@@ -16,6 +16,8 @@ namespace SC
 	typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Channel;} SC_Solenoid;
 	typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Fwd_Channel; int Rev_Channel;} SC_DoubleSolenoid;
 
+	typedef struct {double throttle; double rotation;} SC_DriveInput;
+
 	// PID loop Integral Anti-Windup calculation modes
 	enum SC_PID_AW_MODE { OFF, /*
 						BACK_CALCULATION, 
@@ -32,6 +34,7 @@ namespace SC
 		double Kw;  // Anti-Windup Coeff value
 		bool enabled; // Enabled status of PID Controller
 		bool reversed; // Reversed status of PID Controller
+		double SP; // Current setpoint
 	} SC_PIDStatus;
 
 	template<class T>

@@ -8,6 +8,7 @@
 
 #include "frc/Solenoid.h"
 #include "frc/DigitalInput.h"
+#include "frc/AnalogInput.h"
 
 class X22_Intake
 {
@@ -17,9 +18,10 @@ public:
 				frc::I2C::Port ColorSenPort);
     ~X22_Intake();
 
-    void Collect(bool Run);
+    void Collect(bool Run, bool ForceFeed, bool ReverseFeed);
 
     bool IsCargoLoaded();
+    bool IsCargoStored();
 
 private:
     ctre::phoenix::motorcontrol::can::VictorSPX *Motor_Intake_Master;

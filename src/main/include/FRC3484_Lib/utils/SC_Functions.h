@@ -218,5 +218,29 @@ namespace SC
     {
         return (std::abs(fin) >= deadband) ? fin : 0;
     }
+
+    /**
+     * @brief Checks if the input, fin, is within a percentage of Target.
+     */
+    template<class T>
+    bool F_IsInRange_Pct(T fin, T Target, T RangePct)
+    {
+        T _low = Target * (1 - RangePct);
+        T _high = Target * (1 + RangePct);
+
+        return (fin >= _low) && (fin <= _high);
+    }
+
+    /**
+     * @brief Checks if the input, fin, is within a fixed offset from Target
+     */
+    template<class T>
+    bool F_IsInRange_Offs(T fin, T Target, T RangeOffset)
+    {
+        T _low = Target - RangeOffset;
+        T _high = Target + RangeOffset;
+
+        return (fin >= _low) && (fin <= _high);
+    }
 }
 #endif // SC_FUNCTIONS_H

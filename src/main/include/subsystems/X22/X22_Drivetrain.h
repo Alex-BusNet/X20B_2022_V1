@@ -41,7 +41,9 @@ public:
 
     ~X22_Drivetrain();
 
-    void Drive(double Throttle, double Rotation, bool ShiftOverride);
+    void Drive_Arcade(double Throttle, double Rotation, bool ShiftOverride);
+    //void Drive_Tank(double Right, double Left, bool ShiftOverride);
+    //void Drive_Curve(double Throttle, double Rotation, bool ShiftOverride);
 
     void Shift(bool ShiftLow, bool ShiftHigh);
 
@@ -64,6 +66,8 @@ private:
     ctre::phoenix::motorcontrol::can::WPI_TalonFX *Motor_Right_Master, *Motor_Right_Slave;
 
     double throttleDemand, rotationDemand, throttleCoeff;
+    double rightDemand, leftDemand;
+
     bool inHighGear, inLowGear;
     
     frc::DoubleSolenoid *_shifter;
@@ -83,16 +87,6 @@ private:
     // Dashboard inputs
     SC::SC_SBItem<double> *ntRampTime, *ntThrottleScale;
 
-    /*
-    nt::NetworkTableEntry ntLeftOut, ntRightOut;
-    nt::NetworkTableEntry ntThrottleIn, ntRotationIn;
-    nt::NetworkTableEntry ntInLowGear, ntInHighGear;
-    nt::NetworkTableEntry ntRampTime;
-    nt::NetworkTableEntry ntLeftVel, ntRightVel;
-    nt::NetworkTableEntry ntChassisVx, ntChassisVy, ntChassisOmega;
-    nt::NetworkTableEntry ntLowSF, ntHighSF;
-    */
-
     wpi::StringMap<std::shared_ptr<nt::Value>> props_numbar =
     {
         std::make_pair("min", nt::Value::MakeDouble(-1.0)),
@@ -103,11 +97,6 @@ private:
     {
         std::make_pair("min", nt::Value::MakeDouble(-C_LO_GEAR_MAX_SPEED.value())),
         std::make_pair("max", nt::Value::MakeDouble(C_LO_GEAR_MAX_SPEED.value()))
-        /*
-        std::make_pair("Number of wheels", nt::Value::MakeDouble(6)),
-        std::make_pair("Wheel Diameter", nt::Value::MakeDouble(60)), // Pixels
-        std::make_pair("Show velocity vectors", nt::Value::MakeBoolean(true))
-        */
     };
 
     wpi::StringMap<std::shared_ptr<nt::Value>> props_diffdrive_hi =

@@ -106,7 +106,7 @@ X22_Drivetrain::~X22_Drivetrain()
 	*/
 }
 
-void X22_Drivetrain::Drive(double Throttle, double Rotation, bool ShiftOverride)
+void X22_Drivetrain::Drive_Arcade(double Throttle, double Rotation, bool ShiftOverride)
 {
 	if(ntThrottleScale != NULL) { this->throttleCoeff = ntThrottleScale->GetNumber(C_THROTTLE_SCALE_COEFF); }
 	else {this->throttleCoeff = C_THROTTLE_SCALE_COEFF; }
@@ -114,8 +114,6 @@ void X22_Drivetrain::Drive(double Throttle, double Rotation, bool ShiftOverride)
 	this->throttleDemand = std::copysign(std::min((Throttle*Throttle)*this->throttleCoeff, std::abs(Throttle)), Throttle);
 	this->rotationDemand = Rotation;
 	
-	// if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime.GetDouble(2.0)); }
-	// if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime.GetDouble(2.0)); }
 	if(ntRampTime != NULL)
 	{
 		if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
@@ -158,7 +156,109 @@ void X22_Drivetrain::Drive(double Throttle, double Rotation, bool ShiftOverride)
 		drive->FeedWatchdog();
 	}
 }
+/*
+void X22_Drivetrain::Drive_Tank(double Right, double Left, bool ShiftOverride)
+{
+	if(ntThrottleScale != NULL) { this->throttleCoeff = ntThrottleScale->GetNumber(C_THROTTLE_SCALE_COEFF); }
+	else {this->throttleCoeff = C_THROTTLE_SCALE_COEFF; }
 
+	this->leftDemand = std::copysign(std::min((Left*Left)*this->throttleCoeff, std::abs(Left)), Left);
+	this->rightDemand = std::copysign(std::min((Right*Right)*this->throttleCoeff, std::abs(Right)), Right);
+	
+	if(ntRampTime != NULL)
+	{
+		if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Left_Slave != NULL) { Motor_Left_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Right_Slave != NULL) { Motor_Right_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+	}
+
+	if((drive != NULL) && (Motor_Left_Master != NULL) && (Motor_Right_Master != NULL))
+	{
+	   	// Convert driver inputs to drivetrain outputs
+		wsInput = drive->TankDriveIK(this->leftDemand, this->rightDemand, false);
+
+		ws_PV.left = units::make_unit<feet_per_second_t>(_CalcWheelVelocity(Motor_Left_Master->GetSelectedSensorVelocity(0)));
+		ws_PV.right = units::make_unit<feet_per_second_t>(_CalcWheelVelocity(Motor_Right_Master->GetSelectedSensorVelocity(0)));
+
+		if((_ws_filter_left != NULL) && (_ws_filter_right != NULL) && (ddKinematics != NULL))
+		{
+			// Apply Alpha-Beta filter to smooth out encoder feedback
+			ws_PVf.left = this->_ws_filter_left->Filter(ws_PV.left);
+			ws_PVf.right = this->_ws_filter_right->Filter(ws_PV.right);
+
+			cs_PV = ddKinematics->ToChassisSpeeds(ws_PVf);
+		}
+		else { cs_PV.vx = ws_PV.left; cs_PV.vy = 0.0_mps; cs_PV.omega = 0.0_rad_per_s; }
+
+		// Auto-shifting logic
+		Shift(ShiftOverride || (units::math::abs(cs_PV.vx) < C_SHIFT_DOWN_SPEED),
+			 !ShiftOverride && (units::math::abs(cs_PV.vx) > C_SHIFT_UP_SPEED));
+
+		// Set motor outputs (direct control)
+		Motor_Left_Master->Set(ControlMode::PercentOutput, wsInput.left);
+		Motor_Right_Master->Set(ControlMode::PercentOutput, wsInput.right);
+
+		// Send subsystem data to the dashboard
+		this->_UpdateDashboard();
+
+		// Handle motor safety
+		drive->Feed();
+		drive->FeedWatchdog();
+	}
+}
+
+void X22_Drivetrain::Drive_Curve(double Throttle, double Rotation, bool ShiftOverride)
+{
+		if(ntThrottleScale != NULL) { this->throttleCoeff = ntThrottleScale->GetNumber(C_THROTTLE_SCALE_COEFF); }
+	else {this->throttleCoeff = C_THROTTLE_SCALE_COEFF; }
+
+	this->throttleDemand = std::copysign(std::min((Throttle*Throttle)*this->throttleCoeff, std::abs(Throttle)), Throttle);
+	this->rotationDemand = Rotation;
+	
+	if(ntRampTime != NULL)
+	{
+		if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Left_Slave != NULL) { Motor_Left_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+		if(Motor_Right_Slave != NULL) { Motor_Right_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
+	}
+
+	if((drive != NULL) && (Motor_Left_Master != NULL) && (Motor_Right_Master != NULL))
+	{
+	   	// Convert driver inputs to drivetrain outputs
+		wsInput = drive->CurvatureDriveIK(this->throttleDemand, -this->rotationDemand, false);
+
+		ws_PV.left = units::make_unit<feet_per_second_t>(_CalcWheelVelocity(Motor_Left_Master->GetSelectedSensorVelocity(0)));
+		ws_PV.right = units::make_unit<feet_per_second_t>(_CalcWheelVelocity(Motor_Right_Master->GetSelectedSensorVelocity(0)));
+
+		if((_ws_filter_left != NULL) && (_ws_filter_right != NULL) && (ddKinematics != NULL))
+		{
+			// Apply Alpha-Beta filter to smooth out encoder feedback
+			ws_PVf.left = this->_ws_filter_left->Filter(ws_PV.left);
+			ws_PVf.right = this->_ws_filter_right->Filter(ws_PV.right);
+
+			cs_PV = ddKinematics->ToChassisSpeeds(ws_PVf);
+		}
+		else { cs_PV.vx = ws_PV.left; cs_PV.vy = 0.0_mps; cs_PV.omega = 0.0_rad_per_s; }
+
+		// Auto-shifting logic
+		Shift(ShiftOverride || (units::math::abs(cs_PV.vx) < C_SHIFT_DOWN_SPEED),
+			 !ShiftOverride && (units::math::abs(cs_PV.vx) > C_SHIFT_UP_SPEED));
+
+		// Set motor outputs (direct control)
+		Motor_Left_Master->Set(ControlMode::PercentOutput, wsInput.left);
+		Motor_Right_Master->Set(ControlMode::PercentOutput, wsInput.right);
+
+		// Send subsystem data to the dashboard
+		this->_UpdateDashboard();
+
+		// Handle motor safety
+		drive->Feed();
+		drive->FeedWatchdog();
+	}
+}
+*/
 void X22_Drivetrain::Shift(bool ShiftLow, bool ShiftHigh)
 {
 	if(_shifter != NULL)

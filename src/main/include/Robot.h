@@ -41,6 +41,9 @@ class Robot : public frc::TimedRobot {
   // doesn't have undefined behavior and potentially crash.
   frc2::Command* m_autonomousCommand = nullptr;
 
+  // Processes the driver inputs for moving the robots. Returns true if the robot should shift to low gear
+  bool _HandleDriverInputs();
+
   RobotContainer m_container;
   X22_Drivetrain *x22_drive;
   X22_Intake *x22_intake;
@@ -50,9 +53,18 @@ class Robot : public frc::TimedRobot {
   SC::SC_Range<double> Throttle_Range_Normal;
   SC::SC_Range<double> Throttle_Range_Fine;
 
+#if defined(DRIVE_MODE_ARCADE) || defined(DRIVE_MODE_CURVE)
   double throttleDemand, turnDemand;
-  double forceLowGear;
-
+#elif defined(DRIVE_MODE_TANK)
+  double rightDemand, leftDemand;
+#endif
+  bool forceLowGear;
+  
   frc::XboxController  *GP1_Driver;// GP = Gamepad
   frc::GenericHID      *BB_GameDevice;  
+
+#ifdef CLIMB_CONTROL_SEPARATE
+  frc::GenericHID *BB_Climb;
+#endif
+
 };
