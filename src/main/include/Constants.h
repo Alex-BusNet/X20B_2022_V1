@@ -86,11 +86,11 @@ const double C_GOAL_HEIGHT	  = 104.0; // inches
 #define C_EJECT_VEL_CEN 0.20 // Center launch wheel ejection motor %
 #define C_EJECT_VEL_OUT 0.40 // Outer launch wheel ejection motor %
 
-#define C_LAUNCH_CEN_DEFAULT_KP	0.4
-#define C_LAUNCH_CEN_DEFAULT_KI 0.2
+#define C_LAUNCH_CEN_DEFAULT_KP	0.40
+#define C_LAUNCH_CEN_DEFAULT_KI 0.20
 
-#define C_LAUNCH_OUT_DEFAULT_KP 0.4
-#define C_LAUNCH_OUT_DEFAULT_KI 0.2
+#define C_LAUNCH_OUT_DEFAULT_KP 0.40
+#define C_LAUNCH_OUT_DEFAULT_KI 0.20
 
 #define C_LAUNCH_ANGLE_THRESHOLD 	15*12 // 15 ft (?)
 #define C_LAUNCH_CEN_READY_BAND		0.1 // % Output
@@ -202,7 +202,7 @@ const double C_GOAL_HEIGHT	  = 104.0; // inches
 
 
 /* General Constants */
-#define C_SCAN_TIME         0.010 // seconds
+#define C_SCAN_TIME         0.010_s // seconds
 
 const std::tuple<int, int> C_BLANK_IDS = std::make_tuple<int, int>(-1, -1);
 

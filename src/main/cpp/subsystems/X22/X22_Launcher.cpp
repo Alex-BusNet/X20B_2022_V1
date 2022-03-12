@@ -111,7 +111,7 @@ void X22_Launcher::_TrackTarget(bool Enable)
 			// Turret PI Control
 			this->_turretErr = 0 - this->_vision->GetOffsetX(); 
 			this->_turret_P = this->_turretErr * C_TURRET_DEFAULT_KP;
-			this->_turret_I = F_Limit(-100.0, 100.0, this->_turret_I + (this->_turretErr * C_TURRET_DEFAULT_KI * C_SCAN_TIME));
+			this->_turret_I = F_Limit(-100.0, 100.0, this->_turret_I + (this->_turretErr * C_TURRET_DEFAULT_KI * C_SCAN_TIME.value()));
 
 			this->_turret_CV = F_Scale(-100.0, 100.0, -1.0, -1.0, (this->_turret_P + this->_turret_I));
 
@@ -158,7 +158,7 @@ void X22_Launcher::_SpoolFlywheel(bool Enable)
 				this->_sol_angle->Set(this->_launch_dist > C_LAUNCH_ANGLE_THRESHOLD);
 
 				this->_center_wheel_ready = F_IsInRange_Offs(this->_launch_motor_center->GetSelectedSensorVelocity(), this->_center_PID->GetStatus().SP, C_LAUNCH_CEN_READY_BAND);
-				this->_outer_wheel_ready = F_IsInRange_Offs(this->_launch_motor_outer->GetSelectedSensorVelocity(), this->_outer_PID->GetStatus().SP, C_LAUNCH_CEN_READY_BAND);
+				this->_outer_wheel_ready  = F_IsInRange_Offs(this->_launch_motor_outer->GetSelectedSensorVelocity(),  this->_outer_PID->GetStatus().SP,  C_LAUNCH_CEN_READY_BAND);
 
 				this->_sol_loader->Set(this->_center_wheel_ready && this->_outer_wheel_ready && this->_turretReady);
 

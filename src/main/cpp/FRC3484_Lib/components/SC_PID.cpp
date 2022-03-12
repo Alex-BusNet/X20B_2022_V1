@@ -210,7 +210,7 @@ SC_PIDStatus SC_PID::GetStatus()
 {
     return SC_PIDStatus{P, I, D, err, lastErr, 
                         antiwindupMode, Kw, enabled, 
-                        reversed};
+                        reversed, SP};
 }
 
 bool SC_PID::IsEnabled() { return this->enabled; }
