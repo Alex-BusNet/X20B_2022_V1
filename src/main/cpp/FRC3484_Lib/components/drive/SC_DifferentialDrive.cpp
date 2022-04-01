@@ -1,4 +1,4 @@
-#include "FRC3484_Lib/subsystems/SC_DifferentialDrive.h"
+#include "FRC3484_Lib/components/drive/SC_DifferentialDrive.h"
 
 #include "units/math.h"
 

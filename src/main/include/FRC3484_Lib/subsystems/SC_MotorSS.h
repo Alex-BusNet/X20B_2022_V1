@@ -2,6 +2,7 @@
 #define SC_SUBSYSTEMBASE_H
 
 #include <frc2/command/Subsystem.h>
+
 /*
 #include "units/angle.h"
 #include "units/angular_velocity.h"
@@ -15,14 +16,6 @@
 */
 
 #include <string.h>
-
-/*
-using namespace units::angle;
-using namespace units::angular_velocity;
-using namespace units::velocity;
-using namespace units::length;
-using namespace units::time;
-*/
 
 namespace SC
 {
@@ -40,6 +33,9 @@ namespace SC
         virtual void Stop() { };
 
         std::string GetName();
+
+    protected:
+        virtual void _init_NT_Data() { };
 
     private:
         std::string name;

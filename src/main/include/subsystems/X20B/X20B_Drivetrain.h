@@ -1,7 +1,7 @@
 #ifndef DRIVETRAIN_H
 #define DRIVETRAIN_H
 
-#include "FRC3484_Lib/subsystems/SC_MecanumDrive.h"
+#include "FRC3484_Lib/components/drive/SC_MecanumDrive.h"
 #include "frc/Solenoid.h"
 #include "ctre/phoenix/motorcontrol/can/TalonSRX.h"
 

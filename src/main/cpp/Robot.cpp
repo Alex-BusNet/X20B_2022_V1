@@ -3,7 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 
 #include "Robot.h"
-#include "Constants.h"
+#include "subsystems/X22/X22_Constants.h"
 
 #include "FRC3484_Lib/utils/SC_Functions.h"
 

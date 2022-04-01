@@ -84,6 +84,50 @@ private:
 	// Dashboard inputs
 	SC::SC_SBItem<double> *_nt_turret_kp, *_nt_turret_ki;
 	SC::SC_SBItem<double> *_nt_launcher_kp, *_nt_launcher_ki;
+
+
+	double C_LAUNCHER_CURVE_X[10] = 
+	{
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0
+	};
+
+	double C_LAUNCHER_CEN_CURVE_Y[10] = 
+	{
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0
+	};
+
+	double C_LAUNCHER_OUT_CURVE_Y[10] = 
+	{
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0,
+		0.0
+	};
+
 };
 
 

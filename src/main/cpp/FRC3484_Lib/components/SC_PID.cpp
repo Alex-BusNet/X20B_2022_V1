@@ -28,8 +28,9 @@ SC_PID::SC_PID()
     this->antiwindupMode = SC_PID_AW_MODE::OFF;
 }
 
-SC_PID::SC_PID(SC_PIDConstants PIDc)
+SC_PID::SC_PID(SC_PIDConstants PIDc, std::string Name)
 {
+    this->_ctrlName = Name;
 
     this->SetPIDConstants(PIDc);       
     this->dt = 0.5; // 500 ms
@@ -51,13 +52,13 @@ SC_PID::SC_PID(SC_PIDConstants PIDc)
     this->antiwindupMode = SC_PID_AW_MODE::OFF;
 }
 
-SC_PID::SC_PID(SC_PIDConstants PIDc, SC_PID_AW_MODE awMode)
+SC_PID::SC_PID(SC_PIDConstants PIDc, SC_PID_AW_MODE awMode, std::string Name)
 {
+    this->_ctrlName = Name;
     this->SetPIDConstants(PIDc);
     this->dt = 0.5; // 500 ms
     
     this->Reset();
-
     this->lastErr = 0.0;
     
     this->SCR_Integral(0.0, 100.0);
@@ -182,20 +183,23 @@ void SC_PID::Reset()
     this->I = 0.0;
     this->D = 0.0;
     this->err = 0.0;
+    
+    this->trackerCV = 0.0;
+    this->manualCV = 0.0;
 }
 
 double SC_PID::Calculate(double nPV)
 {
     this->PV = F_Limit(SCR_Process, nPV);
     this->CVfb = CV;
-    return this->Calculate();
+    return this->_calculate();
 }
 
 double SC_PID::Calculate(double nPV, double FB)
 {
     this->PV = F_Limit(SCR_Process, nPV);
     this->CVfb = FB;
-    return this->Calculate();
+    return this->_calculate();
 }
 
 double SC_PID::Calculate(double nPV, double FB, double nSP)
@@ -210,7 +214,7 @@ SC_PIDStatus SC_PID::GetStatus()
 {
     return SC_PIDStatus{P, I, D, err, lastErr, 
                         antiwindupMode, Kw, enabled, 
-                        reversed, SP};
+                        reversed, SP, PV, CV};
 }
 
 bool SC_PID::IsEnabled() { return this->enabled; }
@@ -220,7 +224,7 @@ bool SC_PID::InManualMode() { return this->manualMode; }
 //-------------------------
 //--- Private Functions ---
 //-------------------------
-double SC_PID::Calculate()
+double SC_PID::_calculate()
 {
     if(enabled)
     {
@@ -258,13 +262,13 @@ double SC_PID::Calculate()
             // ramp the CV up to the new CV
             if(manualCV > trackerCV)
             {
-                trackerCV = F_Limit(trackerCV, manualCV, trackerCV + manRate * dt);
+                trackerCV = F_Limit(trackerCV, manualCV, trackerCV + manRate);// * dt);
             }
 
             // Ramp the CV down to the new CV
             if(manualCV < trackerCV)
             {
-                trackerCV = F_Limit(trackerCV, manualCV, trackerCV - manRate * dt);
+                trackerCV = F_Limit(trackerCV, manualCV, trackerCV - manRate);// * dt);
             }
 
             trackerCV = F_Limit(SCR_Integral, trackerCV);

@@ -80,5 +80,6 @@
     "typeinfo": "cpp",
     "*.inc": "cpp",
     "numbers": "cpp"
-  }
+  },
+  "editor.insertSpaces": false
 }

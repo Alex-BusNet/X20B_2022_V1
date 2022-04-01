@@ -1,4 +1,4 @@
-#include "subsystems/X20B/Launcher.h"
+#include "subsystems/X20B/X20B_Launcher.h"
 #include "FRC3484_Lib/utils/SC_Functions.h"
 #include "FRC3484_Lib/utils/SC_Constants.h"
 
@@ -15,10 +15,10 @@ Launcher::Launcher(int channel, SC_PIDConstants PIDc) : SC_MotorSS("Launcher")
     this->controller = new SC_PID(PIDc);
 
     this->rateLim = 0.2;
-    this->rampRate = 1_rpm;
+    this->rampRate = 1.0;
     this->rampInterval = 0.5_s;
     this->wheelRadius = 1_in;
-    this->maxVel = 10_rpm;
+    this->maxVel = 10.0;
     this->gearRatio = 1.0;
 }
 
@@ -56,22 +56,23 @@ void Launcher::Periodic()
         {
             sensorCounts = launchMotor->GetSelectedSensorVelocity(0);
             // Calculate RPM from sensor counts.
-            wheelSpeed =  (sensorCounts / (4096.0 / gearRatio)) * 600.0_rpm;
+            wheelSpeed =  (sensorCounts / (C_TALONFX_CPR / gearRatio)) * 600.0;
             // Convert RPM to ft/sec - the units data type should (may) handle the type conversions.
             //wheelSpeed = make_unit<feet_per_second_t>(wheelSpeedrpm.to<double>() (1 / 60.0) * wheelRadius.to<double>()); //((2 * PI_VAL) / 1_rev) * wheelRadius * (1_min / 60_s); 
             //wheelSpeed = (units::convert<rpm, rad_per_s>(wheelSpeedrpm) / SC::C_REVOLUTION_RADS) * wheelRadius; 
         }
         else
         {
-            wheelSpeed = 0_rpm;
+            wheelSpeed = 0;
         }
     }
     else
     {
-        wheelSpeed = 0_rpm;
+        wheelSpeed = 0;
     }
 
     // Run the PID Controller.
+    /*
     if(enabled)
     {
         timeElapsed += SC::C_CYCLE_TIME;
@@ -95,6 +96,7 @@ void Launcher::Periodic()
         else
             UseOutput(0.0);
     }
+    */
 }
 
 void Launcher::Stop()
@@ -106,17 +108,17 @@ void Launcher::Stop()
 
 void Launcher::SetVelocitySP(revolutions_per_minute_t value)
 {
-    this->velocitySP = F_Limit(0_rpm, this->maxVel, value);
+    this->velocitySP = F_Limit(0.0, this->maxVel, value.value());
 }
 
 void Launcher::SetMaxVelocity(revolutions_per_minute_t value)
 {
-    this->maxVel = value;
+    this->maxVel = value.value();
 }
 
 void Launcher::SetTolerance(revolutions_per_minute_t tol)
 {
-    this->tolerance = tol;
+    this->tolerance = tol.value();
 }
 
 void Launcher::SetRateLimit(double value)
@@ -126,12 +128,12 @@ void Launcher::SetRateLimit(double value)
 
 void Launcher::SetRampRate(revolutions_per_minute_t step)
 {
-    this->rampRate = step;
+    this->rampRate = step.value();
 }
 
 void Launcher::SetRampRate(revolutions_per_minute_t step, millisecond_t interval)
 {
-    this->rampRate = step;
+    this->rampRate = step.value();
     this->rampInterval = interval;
 }
 
@@ -154,11 +156,12 @@ void Launcher::UseOutput(double output)
 
 bool Launcher::InPosition()
 {
-    return ((velocitySP + tolerance) > wheelSpeed) 
-        && ((velocitySP - tolerance) < wheelSpeed);
+    return false;
+    //((velocitySP + tolerance) > wheelSpeed) 
+        // && ((velocitySP - tolerance) < wheelSpeed);
 }
 
 double Launcher::GetMeasurement()
 {
-    return wheelSpeed.to<double>();
+    return wheelSpeed;
 }

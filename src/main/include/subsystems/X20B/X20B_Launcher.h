@@ -1,5 +1,5 @@
-#ifndef LAUNCHER_H
-#define LAUNCHER_H
+#ifndef X20B_LAUNCHER_H
+#define X20B_LAUNCHER_H
 
 /*
  *   Desc: Launcher Subsystem
@@ -128,8 +128,8 @@ public:
 private:
     void UseOutput(double output);
 
-    units::revolutions_per_minute_t velocitySP, tolerance, rampRate, sp_feed;
-    units::revolutions_per_minute_t maxVel, wheelSpeed;
+    double velocitySP, tolerance, rampRate, sp_feed;
+    double maxVel, wheelSpeed;
     
     units::foot_t wheelRadius;
 
@@ -149,4 +149,4 @@ private:
 };
 
 
-#endif // LAUNCHER_H
+#endif // X20B_LAUNCHER_H

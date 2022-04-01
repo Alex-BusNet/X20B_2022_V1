@@ -1,5 +1,5 @@
-#ifndef TURRET_H
-#define TURRET_H
+#ifndef X20B_TURRET_H
+#define X20B_TURRET_H
 
 #include "ctre/phoenix/motorcontrol/can/VictorSPX.h"
 
@@ -66,4 +66,4 @@ private:
     SC::SC_PID *turretPID;
 
 };
-#endif // TURRET_H
+#endif // X20B_TURRET_H

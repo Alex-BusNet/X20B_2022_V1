@@ -6,6 +6,7 @@
 #include "units/velocity.h"
 #include "units/length.h"
 #include "units/constants.h"
+#include "FRC3484_Lib/utils/SC_Constants.h"
 
 /**
  * The Constants header provides a convenient place for teams to hold robot-wide
@@ -201,49 +202,4 @@ const double C_GOAL_HEIGHT	  = 104.0; // inches
 #endif
 
 
-/* General Constants */
-#define C_SCAN_TIME         0.010_s // seconds
 
-const std::tuple<int, int> C_BLANK_IDS = std::make_tuple<int, int>(-1, -1);
-
-static double C_LAUNCHER_CURVE_X[10] = 
-{
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0
-};
-
-static double C_LAUNCHER_CEN_CURVE_Y[10] = 
-{
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0
-};
-
-static double C_LAUNCHER_OUT_CURVE_Y[10] = 
-{
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0
-};

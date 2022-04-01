@@ -25,8 +25,8 @@ namespace SC
     {
     public:
         SC_PID();
-        SC_PID(SC::SC_PIDConstants PIDc);
-        SC_PID(SC::SC_PIDConstants PIDc, SC::SC_PID_AW_MODE awMode);
+        SC_PID(SC::SC_PIDConstants PIDc, std::string Name = "");
+        SC_PID(SC::SC_PIDConstants PIDc, SC::SC_PID_AW_MODE awMode, std::string Name = "");
         ~SC_PID();
 
         void SetPIDConstants(SC::SC_PIDConstants PIDc);
@@ -182,7 +182,7 @@ namespace SC
          * 
          * @returns The new CV value
          */
-        double Calculate();
+        double _calculate();
 
         /**
          * @brief   Calculates the Ingerator Anti-Windup Coeff used with
@@ -215,6 +215,8 @@ namespace SC
         bool enabled, manualMode;
         bool reversed;
         SC::SC_PID_AW_MODE antiwindupMode;
+
+        std::string _ctrlName;
     };
 }
 
