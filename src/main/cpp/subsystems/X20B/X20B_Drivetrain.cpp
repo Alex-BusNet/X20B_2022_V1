@@ -1,7 +1,7 @@
 #include "subsystems/X20B/X20B_Drivetrain.h"
 #include "units/angle.h"
 #include "FRC3484_Lib/utils/SC_Functions.h"
-#include "Constants.h"
+#include "FRC3484_Lib/utils/SC_Constants.h"
 
 using namespace SC;
 using namespace frc;
@@ -158,7 +158,7 @@ void X20B_Drivetrain::Drive(double joystick_x, double joystick_y, double gyro, b
 
     if(md != nullptr)
     {
-        md->SetMaxWheelSpeed(shift ? C_LO_GEAR_MAX_SPEED : C_HI_GEAR_MAX_SPEED);
+        //md->SetMaxWheelSpeed(shift ? C_LO_GEAR_MAX_SPEED : C_HI_GEAR_MAX_SPEED);
 
         md->DriveCartesian(joystick_x, joystick_x, 0.0, 
                             units::make_unit<units::degree_t>(gyro));
@@ -178,7 +178,7 @@ void X20B_Drivetrain::DriveAuto(double magnitude, double angle, double heading, 
 
     if(md != nullptr)
     {
-        md->SetMaxWheelSpeed(shift ? C_LO_GEAR_MAX_SPEED : C_HI_GEAR_MAX_SPEED);
+        //md->SetMaxWheelSpeed(shift ? C_LO_GEAR_MAX_SPEED : C_HI_GEAR_MAX_SPEED);
 
         md->DrivePolar(magnitude,
                        units::make_unit<units::degree_t>(angle), 

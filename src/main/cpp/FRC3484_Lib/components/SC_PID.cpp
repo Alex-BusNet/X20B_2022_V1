@@ -1,5 +1,6 @@
 #include "FRC3484_Lib/components/SC_PID.h"
 #include "FRC3484_Lib/utils/SC_Functions.h"
+#include "frc/MathUtil.h"
 
 using namespace units::time;
 using namespace SC;
@@ -10,15 +11,15 @@ using namespace SC;
 SC_PID::SC_PID()
 {
     this->SetPIDConstants(1.0, 0.0, 0.0, 0.0);
-    this->dt = 0.5; // 500 ms
+    this->dt = 0.02; // 20 ms
 
     this->Reset(); 
-    this->lastErr = 0.0;
     
     this->SCR_Integral(0.0, 100.0);
     this->SCR_Deriv(0.0, 100.0);
-    this->SCR_Setpoint(-100.0, 100.0);
-    this->SCR_Process(-100.0, 100.0);
+    this->SCR_Setpoint(0.0, 100.0);
+    this->SCR_Process(0.0, 100.0);
+    this->SCR_Output(0.0, 100.0);
 
     this->DervA = 0.0;
     this->DervB = 0.0;
@@ -26,6 +27,7 @@ SC_PID::SC_PID()
     this->enabled = false;
     this->reversed = false;
     this->antiwindupMode = SC_PID_AW_MODE::OFF;
+    this->inputIsCont = false;
 }
 
 SC_PID::SC_PID(SC_PIDConstants PIDc, std::string Name)
@@ -33,21 +35,22 @@ SC_PID::SC_PID(SC_PIDConstants PIDc, std::string Name)
     this->_ctrlName = Name;
 
     this->SetPIDConstants(PIDc);       
-    this->dt = 0.5; // 500 ms
-    
+    this->dt = 0.02; // 20 ms
+
     this->Reset();
-    this->lastErr = 0.0;
     
     this->SCR_Integral(0.0, 100.0);
     this->SCR_Deriv(0.0, 100.0);
-    this->SCR_Setpoint(-100.0, 100.0);
-    this->SCR_Process(-100.0, 100.0);
+    this->SCR_Setpoint(0.0, 100.0);
+    this->SCR_Process(0.0, 100.0);
+    this->SCR_Output(0.0, 100.0);
 
     this->DervA = 0.0;
     this->DervB = 0.0;
 
     this->enabled = false;
     this->reversed = false;
+    this->inputIsCont = false;
 
     this->antiwindupMode = SC_PID_AW_MODE::OFF;
 }
@@ -56,15 +59,15 @@ SC_PID::SC_PID(SC_PIDConstants PIDc, SC_PID_AW_MODE awMode, std::string Name)
 {
     this->_ctrlName = Name;
     this->SetPIDConstants(PIDc);
-    this->dt = 0.5; // 500 ms
+    this->dt = 0.02; // 500 ms
     
     this->Reset();
-    this->lastErr = 0.0;
     
     this->SCR_Integral(0.0, 100.0);
     this->SCR_Deriv(0.0, 100.0);
-    this->SCR_Setpoint(-100.0, 100.0);
-    this->SCR_Process(-100.0, 100.0);
+    this->SCR_Setpoint(0.0, 100.0);
+    this->SCR_Process(0.0, 100.0);
+    this->SCR_Output(0.0, 100.0);
 
     this->DervA = 0.0;
     this->DervB = 0.0;
@@ -72,7 +75,25 @@ SC_PID::SC_PID(SC_PIDConstants PIDc, SC_PID_AW_MODE awMode, std::string Name)
     this->enabled = false;
     this->reversed = false;
     this->antiwindupMode = awMode;
+    this->inputIsCont = false;
 
+}
+
+SC_PID::SC_PID(SC_PIDConfig PIDCfg, std::string Name)
+{
+    this->_ctrlName = Name;
+    this->dt = PIDCfg.ScanTime.value();
+    
+    this->Reset();
+    
+    this->Configure(PIDCfg);
+
+    this->DervA = 0.0;
+    this->DervB = 0.0;
+
+    this->enabled = false;
+    this->reversed = false;
+    this->inputIsCont = false;
 }
 
 SC_PID::~SC_PID()
@@ -88,6 +109,22 @@ SC_PID::~SC_PID()
 //------------------------
 //--- Public Functions ---
 //------------------------
+
+void SC_PID::Configure(SC_PIDConfig PIDCfg)
+{
+    SetPIDConstants(PIDCfg.PIDc);
+    
+    SetSPLimits(PIDCfg.R_SP);
+    SetPVLimits(PIDCfg.R_PV);
+    SetCVLimits(PIDCfg.R_CV);
+
+    SetILimits(PIDCfg.R_I);
+    SetDLimits(PIDCfg.R_D);
+
+    this->antiwindupMode = PIDCfg.AW_Mode;
+
+    SetManRate(PIDCfg.ManRate);
+}
 
 void SC_PID::SetPIDConstants(SC_PIDConstants PIDc)
 {
@@ -149,7 +186,13 @@ void SC_PID::SetDLimits(double minD, double maxD) { this->SCR_Deriv(minD, maxD);
 
 void SC_PID::SetDLimits(SC_Range<double> DR) { SetDLimits(DR.Val_min, DR.Val_max); }
 
-void SC_PID::Setdt(units::time::second_t ndt) { this->dt = ndt.to<double>(); }
+void SC_PID::SetCVLimits(double minCV, double maxCV) { this->SCR_Output(minCV, maxCV); }
+
+void SC_PID::SetCVLimits(SC_Range<double> CVR) { SetCVLimits(CVR.Val_min, CVR.Val_max); }
+
+void SC_PID::Setdt(units::time::second_t ndt) { this->dt = ndt.value(); }
+
+void SC_PID::SetManRate(double nMR) { this->manRate = nMR; }
 
 void SC_PID::Enable() { this->Enable(false); }
 
@@ -171,7 +214,7 @@ void SC_PID::EnableManualMode() { this->manualMode = true; }
 
 void SC_PID::DisableManualMode() { this->manualMode = false; }
 
-void SC_PID::SetCV(double nCV) { this->manualCV = F_Limit(0.0, 100.0, nCV); }
+void SC_PID::SetCV(double nCV) { this->manualCV = F_Limit(SCR_Output, nCV); }
 
 void SC_PID::Reset()
 {
@@ -183,6 +226,8 @@ void SC_PID::Reset()
     this->I = 0.0;
     this->D = 0.0;
     this->err = 0.0;
+
+    this->lastErr = 0.0;
     
     this->trackerCV = 0.0;
     this->manualCV = 0.0;
@@ -195,17 +240,16 @@ double SC_PID::Calculate(double nPV)
     return this->_calculate();
 }
 
-double SC_PID::Calculate(double nPV, double FB)
-{
-    this->PV = F_Limit(SCR_Process, nPV);
-    this->CVfb = FB;
-    return this->_calculate();
-}
-
-double SC_PID::Calculate(double nPV, double FB, double nSP)
+double SC_PID::Calculate(double nPV, double nSP)
 {
     this->SP = F_Limit(SCR_Setpoint, nSP);
-    return this->Calculate(nPV, FB);
+    return this->Calculate(nPV);
+}
+
+double SC_PID::Calculate(double nPV, double nSP, double FB)
+{
+    this->CVfb = FB;
+    return this->Calculate(nPV, nSP);
 }
 
 double SC_PID::GetError() { return this->err; }
@@ -235,6 +279,8 @@ double SC_PID::_calculate()
             else
                 err = SP - PV;
 
+            if(inputIsCont) { err = frc::InputModulus(err, SCR_Setpoint.Val_min, SCR_Setpoint.Val_max); }
+
             // Calculate the Proportional term
             P = Kp * err;
 
@@ -249,7 +295,7 @@ double SC_PID::_calculate()
             lastErr = err;
 
             // Calculate the output
-            CV = F_Limit(0.0, 100.0, (SP * Kf) + P + I + D);
+            CV = F_Limit(SCR_Output, (SP * Kf) + P + I + D);
             
             // Used to hold the CV in manual mode
             trackerCV = CV;

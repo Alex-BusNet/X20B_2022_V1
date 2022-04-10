@@ -6,10 +6,10 @@
 
 using namespace std;
 
-#define ALLOW_TC_IF_SYNTAX  // TwinCAT IF Syntax (IF..THEN..ELSE/ELSIF THEN...END_IF)
-#define ALLOW_TC_MATH       // Allow TwinCAT math operators (ADD, SUB, MULT, DIV, EXPT; EXP is part of cmath)
-#define ALLOW_TC_COMPARE    // Allow TwinCAT comparison operators (LE, LT, EQ, NE, GE, GT)
-#define ALLOW_TC_BITWISE    // Allow TwinCAT bitwise operators (SHL, SHR, XOR, COMP)
+// #define ALLOW_TC_IF_SYNTAX  // TwinCAT IF Syntax (IF..THEN..ELSE/ELSIF THEN...END_IF)
+// #define ALLOW_TC_MATH       // Allow TwinCAT math operators (ADD, SUB, MULT, DIV, EXPT; EXP is part of cmath)
+// #define ALLOW_TC_COMPARE    // Allow TwinCAT comparison operators (LE, LT, EQ, NE, GE, GT)
+// #define ALLOW_TC_BITWISE    // Allow TwinCAT bitwise operators (SHL, SHR, XOR, COMP)
 
 #if defined(ALLOW_TC_IF_SYNTAX)
     #define IF              if(
@@ -70,28 +70,18 @@ using namespace std;
 class R_TRIG
 {
 public:
-    R_TRIG() { CLK = false; };
+    R_TRIG() { lastState = false; };
 
-    R_TRIG& operator()(bool in) 
+    void Check(bool CLK) 
     { 
-        lastState = CLK; 
-        CLK = in;
-
-        IF CLK AND NOT(CLK == lastState) THEN
-            Q = true;
-        ELSE
-            Q = false;
-        END_IF
-
-        return *this;
+        this->Q = CLK && !this->lastState;
+        this->lastState = CLK;
     }
 
     bool Q;
 
 private:
-    bool CLK;
-
-    bool lastState;
+    bool state, lastState;
 
 };
 
@@ -105,20 +95,12 @@ private:
 class F_TRIG
 {
 public:
-    F_TRIG() { state = false; };
+    F_TRIG() { lastState = false; };
 
-    F_TRIG& operator()(bool CLK) 
+    void Check(bool CLK) 
     { 
-        lastState = state; 
-        state = CLK;
-
-        IF NOT state AND NOT(state == lastState) THEN
-            Q = true;
-        ELSE
-            Q = false;
-        END_IF
-
-        return *this;
+        this->Q = !CLK && this->lastState;
+        this->lastState = CLK;
     }
 
     bool Q;

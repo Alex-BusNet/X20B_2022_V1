@@ -17,6 +17,14 @@
 #include "subsystems/X22/X22_Climb.h"
 
 #include <frc/XboxController.h>
+#include <frc/Joystick.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc/filter/Debouncer.h>
+#include <frc/PneumaticHub.h>
+#include <frc/PowerDistribution.h>
+
+#include <frc/Timer.h>
+
 
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableValue.h>
@@ -24,47 +32,61 @@
 using namespace frc;
 using namespace ctre::phoenix::motorcontrol::can;
 
-class Robot : public frc::TimedRobot {
- public:
-  void RobotInit() override;
-  void RobotPeriodic() override;
-  void DisabledInit() override;
-  void DisabledPeriodic() override;
-  void AutonomousInit() override;
-  void AutonomousPeriodic() override;
-  void TeleopInit() override;
-  void TeleopPeriodic() override;
-  void TestPeriodic() override;
+class Robot : public frc::TimedRobot 
+{
+public:
+	void RobotInit() override;
+	void RobotPeriodic() override;
+	void DisabledInit() override;
+	void DisabledPeriodic() override;
+	void AutonomousInit() override;
+	void AutonomousPeriodic() override;
+	void TeleopInit() override;
+	void TeleopPeriodic() override;
+	void TestPeriodic() override;
 
- private:
-  // Have it null by default so that if testing teleop it
-  // doesn't have undefined behavior and potentially crash.
-  frc2::Command* m_autonomousCommand = nullptr;
+private:
+	// Have it null by default so that if testing teleop it
+	// doesn't have undefined behavior and potentially crash.
+	frc2::Command* m_autonomousCommand = nullptr;
 
-  // Processes the driver inputs for moving the robots. Returns true if the robot should shift to low gear
-  bool _HandleDriverInputs();
-
-  RobotContainer m_container;
-  X22_Drivetrain *x22_drive;
-  X22_Intake *x22_intake;
-  X22_Launcher *x22_launcher;
-  X22_Climb *x22_climb;
-
-  SC::SC_Range<double> Throttle_Range_Normal;
-  SC::SC_Range<double> Throttle_Range_Fine;
-
-#if defined(DRIVE_MODE_ARCADE) || defined(DRIVE_MODE_CURVE)
-  double throttleDemand, turnDemand;
-#elif defined(DRIVE_MODE_TANK)
-  double rightDemand, leftDemand;
-#endif
-  bool forceLowGear;
-  
-  frc::XboxController  *GP1_Driver;// GP = Gamepad
-  frc::GenericHID      *BB_GameDevice;  
-
+	// Processes the driver inputs for moving the robots. Returns true if the robot should shift to low gear
+	bool _HandleDriverInput();
+	void _HandleGameDeviceInput();
 #ifdef CLIMB_CONTROL_SEPARATE
-  frc::GenericHID *BB_Climb;
+	void _HandleClimbInput();
 #endif
 
+	RobotContainer m_container;
+
+	std::shared_ptr<nt::NetworkTable> _nt_table;
+
+	frc::PneumaticHub *pch;
+	frc::PowerDistribution *pdp;
+
+	X22_Drivetrain *x22_drive;
+	X22_Intake *x22_intake;
+	X22_Launcher *x22_launcher;
+	X22_Climb *x22_climb;
+
+	SC::SC_Range<double> Throttle_Range_Normal;
+	SC::SC_Range<double> Throttle_Range_Fine;
+
+#if defined(DRIVE_MODE_ARCADE) || defined(DRIVE_MODE_ARCADE)
+	double throttleDemand, turnDemand;
+#elif defined(DRIVE_MODE_TANK)
+	double rightDemand, leftDemand;
+#endif
+	bool forceLowGear;
+
+	frc::XboxController *GP1_Driver; // GP = Gamepad
+	frc::XboxController *BB_GameDevice;
+#ifndef CLIMB_CONTROL_SPERATE
+	frc::Joystick       *JS_Climb; 
+#endif
+
+	// Autonomous
+	frc::Debouncer *_dbnc_taxi_time;
+	frc::Timer *_tmr_taxi_time;
+	bool _launch, _autoDone;
 };

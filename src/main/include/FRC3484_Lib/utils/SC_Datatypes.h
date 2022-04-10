@@ -6,41 +6,19 @@
 #include <tuple>
 #include <algorithm>
 #include <stdexcept>
+
 #include "frc/PneumaticsModuleType.h"
+#include "frc/geometry/Translation2d.h"
+
+#include "ctre/phoenix/motorcontrol/can/TalonFX.h"
+
 #include "units/time.h"
+#include "units/math.h"
+
+#include "SC_Filters.h"
 
 namespace SC
 {
-	typedef struct {double Kp; double Ki; double Kd; double Kf;} SC_PIDConstants;
-
-	typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Channel;} SC_Solenoid;
-	typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Fwd_Channel; int Rev_Channel;} SC_DoubleSolenoid;
-
-	typedef struct {int DriveID; int RotID; SC_PIDConstants DriveCoeff; SC_PIDConstants RotCoeff;} SC_SwerveConfig;
-
-	typedef struct {double throttle; double rotation;} SC_DriveInput;
-
-	// PID loop Integral Anti-Windup calculation modes
-	enum SC_PID_AW_MODE { OFF, /*
-						BACK_CALCULATION, 
-						CONDITIONAL_INTEGRAL, */
-						INTEGRAL_LIMIT };
-
-	typedef struct {
-		double P;   // Current value of the P term 
-		double I;   // Current value of the I term
-		double D;   // Current value of the D term
-		double E;   // Current error value
-		double Elast; // Last error value
-		SC_PID_AW_MODE AntiWindup_Mode; // Configured Anti-windup method
-		double Kw;  // Anti-Windup Coeff value
-		bool enabled; // Enabled status of PID Controller
-		bool reversed; // Reversed status of PID Controller
-		double SP; // Current setpoint
-		double PV;
-		double CV;
-	} SC_PIDStatus;
-
 	template<class T>
 	struct SC_Range 
 	{ 
@@ -72,6 +50,69 @@ namespace SC
 		}
 	};
 
+	/*========================*/
+	/*=== SC_PID Datatypes ===*/
+	/*========================*/
+
+	// PID loop Integral Anti-Windup calculation modes
+	enum SC_PID_AW_MODE { OFF, /*
+						BACK_CALCULATION, 
+						CONDITIONAL_INTEGRAL, */
+						INTEGRAL_LIMIT };
+
+	typedef struct {double Kp; double Ki; double Kd; double Kf;} SC_PIDConstants;
+	typedef struct {
+		SC_PIDConstants PIDc; 
+		units::time::second_t ScanTime;		// Update period of the PID loop
+		SC_Range<double> R_SP;				// Setpoint bounding range
+		SC_Range<double> R_PV;				// PV (sensor input) bounding range
+		SC_Range<double> R_CV;				// CV (output) bounding range
+		SC_Range<double> R_I;				// Integral bounding range
+		SC_Range<double> R_D; 				// Derivative bouding range
+		double ManRate; 					// Manual mode CV ramp rate
+		SC_PID_AW_MODE AW_Mode = OFF;		// Integral Anti-windup mode (default = OFF)
+	} SC_PIDConfig;
+
+	typedef struct {
+		double P;   // Current value of the P term 
+		double I;   // Current value of the I term
+		double D;   // Current value of the D term
+		double E;   // Current error value
+		double Elast; // Last error value
+		SC_PID_AW_MODE AntiWindup_Mode; // Configured Anti-windup method
+		double Kw;  // Anti-Windup Coeff value
+		bool enabled; // Enabled status of PID Controller
+		bool reversed; // Reversed status of PID Controller
+		double SP; // Current setpoint
+		double PV;
+		double CV;
+	} SC_PIDStatus;
+
+
+	/*==========================================*/
+	/*=== Pneumatic Configuration Structures ===*/
+	/*==========================================*/
+	typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Channel;} SC_Solenoid;
+	typedef struct {int CtrlID; frc::PneumaticsModuleType CtrlType; int Fwd_Channel; int Rev_Channel;} SC_DoubleSolenoid;
+
+	/*===========================================*/
+	/*=== Drivetrain Configuration Structures ===*/
+	/*===========================================*/
+	typedef struct { int CANId; ctre::phoenix::motorcontrol::TalonFXInvertType InvDir; } SC_Motor_OL; // Open-loop motor definition
+	typedef struct { int CANId; ctre::phoenix::motorcontrol::TalonFXInvertType InvDir; double ScaleFactor; SC_PIDConfig PIDCfg; } SC_Motor_CL; // Closed-loop motor definition
+
+	typedef struct { SC_Motor_CL DriveMotor; SC_Motor_CL RotMotor; frc::Translation2d ModuleLoc; int EncID; } SC_SwerveModuleConfig;
+	typedef struct { SC_SwerveModuleConfig FL_cfg; SC_SwerveModuleConfig FR_cfg; SC_SwerveModuleConfig BL_cfg; SC_SwerveModuleConfig BR_cfg; } SC_SwerveConfig;
+
+	typedef struct {double throttle; double rotation;} SC_DriveInput;
+	
+	enum DriveMode { DEFAULT, TANK, DIFFERENTIAL, MECANUM, SWERVE };
+	enum SC_Wheel { FRONT_LEFT, FRONT_RIGHT, REAR_LEFT, REAR_RIGHT, LEFT_WHEEL, RIGHT_WHEEL };
+
+
+	/*=======================*/
+	/*=== Other Datatypes ===*/
+	/*=======================*/
 	template<class T>
 	class SC_Array
 	{
@@ -147,46 +188,6 @@ namespace SC
 	private:
 		T *values;
 		uint len;
-
-	};
-
-	enum DriveMode { DEFAULT, TANK, DIFFERENTIAL, MECANUM };
-	enum SC_Wheel { FRONT_LEFT, FRONT_RIGHT, REAR_LEFT, REAR_RIGHT, LEFT_WHEEL, RIGHT_WHEEL };
-
-	template<class T>
-	class SC_ABFilter
-	{
-	public:
-		SC_ABFilter<T>(units::time::second_t FilterTime, units::time::second_t ScanTime)
-		{
-			this->_tau = FilterTime.value();
-			this->_scanT = ScanTime.value();
-		}
-
-		~SC_ABFilter<T>()
-		{
-			;
-		}
-
-		T Filter(T PV)
-		{
-			T pvf = PV; // Filtered input value
-
-			if(this->_tau != this->_scanT)
-			{
-				this->_beta = 1.0 / (this->_tau + this->_scanT);
-				this->_alpha = 1 - this->_beta;
-
-				// TODO: Alpha/Beta equation
-
-				pvf = PV;
-			}
-
-			return pvf;
-		}
-	private:
-		double _tau, _scanT;
-		double _alpha, _beta;
 
 	};
 }

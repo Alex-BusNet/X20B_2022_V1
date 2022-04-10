@@ -6,6 +6,7 @@
 
 using namespace SC;
 using namespace frc;
+using namespace nt;
 using namespace units::length;
 using namespace units::velocity;
 using namespace units::angular_velocity;
@@ -13,7 +14,7 @@ using namespace ctre::phoenix::motorcontrol::can;
 using namespace ctre::phoenix::motorcontrol;
 
 X22_Drivetrain::X22_Drivetrain(inch_t trackwidth, feet_per_second_t MaxTangVel, degrees_per_second_t MaxRotVel,
-							   std::tuple<int, int> LeftIDs, std::tuple<int, int> RightIDs, SC_DoubleSolenoid Shifter)
+							   std::tuple<int, int> LeftIDs, std::tuple<int, int> RightIDs, SC_Solenoid Shifter)
 {
 	// drive = new SC_DifferentialDrive(trackwidth, MaxTangVel, MaxRotVel);
 	this->_InitDashboard(); 
@@ -21,8 +22,8 @@ X22_Drivetrain::X22_Drivetrain(inch_t trackwidth, feet_per_second_t MaxTangVel, 
 	_linVelRange(-MaxTangVel.value(), MaxTangVel.value());
 	_angVelRange(-MaxRotVel.value(), MaxRotVel.value());
 
-	this->_ws_filter_left = new SC_ABFilter<meters_per_second_t>(C_DT_WHEEL_TAU, C_SCAN_TIME);
-	this->_ws_filter_right = new SC_ABFilter<meters_per_second_t>(C_DT_WHEEL_TAU, C_SCAN_TIME);
+	this->_ws_filter_left = new SC_ABFilterU<meters_per_second_t>(C_DT_WHEEL_TAU, C_SCAN_TIME);
+	this->_ws_filter_right = new SC_ABFilterU<meters_per_second_t>(C_DT_WHEEL_TAU, C_SCAN_TIME);
 
 	int sCh = -1;
 
@@ -34,7 +35,7 @@ X22_Drivetrain::X22_Drivetrain(inch_t trackwidth, feet_per_second_t MaxTangVel, 
 
 		sCh = std::get<1>(LeftIDs);
 
-		if(sCh > -1) { Motor_Left_Slave = new WPI_TalonFX(sCh); _InitMotor(Motor_Left_Slave, true, Motor_Left_Master); }
+		if(sCh != C_DISABLED_CHANNEL) { Motor_Left_Slave = new WPI_TalonFX(sCh); _InitMotor(Motor_Left_Slave, true, Motor_Left_Master); }
 		else { Motor_Left_Slave = NULL; }
 	} 
 	else { Motor_Left_Master = NULL; Motor_Left_Slave = NULL; }
@@ -48,17 +49,18 @@ X22_Drivetrain::X22_Drivetrain(inch_t trackwidth, feet_per_second_t MaxTangVel, 
 
 		sCh = std::get<1>(RightIDs);
 
-		if(sCh > -1) { Motor_Right_Slave = new WPI_TalonFX(sCh); _InitMotor(Motor_Right_Slave, false, Motor_Right_Master); }
+		if(sCh != C_DISABLED_CHANNEL) { Motor_Right_Slave = new WPI_TalonFX(sCh); _InitMotor(Motor_Right_Slave, false, Motor_Right_Master); }
 		else { Motor_Right_Slave = NULL; }
 	} 
 	else { Motor_Right_Master = NULL; Motor_Right_Slave = NULL; }
 	
 	drive = new DifferentialDrive(*Motor_Left_Master, *Motor_Right_Master);
 	ddKinematics = new DifferentialDriveKinematics(trackwidth);
+	ddOdometry = new DifferentialDriveOdometry(frc::Rotation2d{0_deg});
 
-	if(Shifter.Fwd_Channel != -1) 
-	{ 
-		_shifter = new DoubleSolenoid(Shifter.CtrlID, Shifter.CtrlType, Shifter.Fwd_Channel, Shifter.Rev_Channel);
+	if(Shifter.Channel != -1) 
+	{
+		_shifter = new Solenoid(Shifter.CtrlID, Shifter.CtrlType, Shifter.Channel);
 		Shift(true, false);
 	}
 	else { _shifter = NULL; }
@@ -68,6 +70,7 @@ X22_Drivetrain::~X22_Drivetrain()
 {
 	if(drive != NULL) { delete drive; }
 	if(ddKinematics != NULL) { delete ddKinematics; }
+	if(ddOdometry != NULL) { delete ddOdometry; }
 	if(Motor_Left_Master != NULL) { delete Motor_Left_Master; }
 	if(Motor_Left_Slave != NULL) { delete Motor_Left_Slave; }
 	if(Motor_Right_Master != NULL) { delete Motor_Right_Master; }
@@ -76,51 +79,31 @@ X22_Drivetrain::~X22_Drivetrain()
 	if(_ws_filter_left != NULL) { delete _ws_filter_left; }
 	if(_ws_filter_right != NULL) { delete _ws_filter_right; }
 
-	if(ntLeftOut != NULL) { delete ntLeftOut; }
-	if(ntRightOut != NULL) { delete ntRightOut; }
-	if(ntThrottleIn != NULL) { delete ntThrottleIn; }
-	if(ntRotationIn != NULL) { delete ntRotationIn; }
-	if(ntInLowGear != NULL) { delete ntInLowGear; }
-	if(ntInHighGear != NULL) { delete ntInHighGear; }
-	if(ntRampTime != NULL) { delete ntRampTime; }
-	if(ntLeftVel != NULL) { delete ntLeftVel; }
-	if(ntRightVel != NULL) { delete ntRightVel; }
-	if(ntChassisVx != NULL) { delete ntChassisVx; }
-	if(ntChassisVy != NULL) { delete ntChassisVy; }
-	if(ntChassisOmega != NULL) { delete ntChassisOmega; }
-
-	/*
-	ntLeftOut.Delete();
-	ntRightOut.Delete();
-	ntThrottleIn.Delete();
-	ntRotationIn.Delete();
-	ntInLowGear.Delete();
-	ntInHighGear.Delete();
-	ntRampTime.Delete();
-	ntLeftVel.Delete();
-	ntRightVel.Delete();
-	ntChassisVy.Delete();
-	ntChassisVx.Delete();
-	ntChassisOmega.Delete();
-
-	*/
+	// if(ntLeftOut != NULL) { delete ntLeftOut; }
+	// if(ntRightOut != NULL) { delete ntRightOut; }
+	// if(ntThrottleIn != NULL) { delete ntThrottleIn; }
+	// if(ntRotationIn != NULL) { delete ntRotationIn; }
+	// if(ntInLowGear != NULL) { delete ntInLowGear; }
+	// if(ntInHighGear != NULL) { delete ntInHighGear; }
+	//if(ntRampTime != NULL) { delete ntRampTime; }
+	// if(ntLeftVel != NULL) { delete ntLeftVel; }
+	// if(ntRightVel != NULL) { delete ntRightVel; }
+	// if(ntChassisVx != NULL) { delete ntChassisVx; }
+	// if(ntChassisVy != NULL) { delete ntChassisVy; }
+	// if(ntChassisOmega != NULL) { delete ntChassisOmega; }
 }
 
-void X22_Drivetrain::Drive_Arcade(double Throttle, double Rotation, bool ShiftOverride)
+void X22_Drivetrain::Drive_Arcade(double Throttle, double Rotation, bool ShiftOverride, bool EBrake)
 {
-	if(ntThrottleScale != NULL) { this->throttleCoeff = ntThrottleScale->GetNumber(C_THROTTLE_SCALE_COEFF); }
-	else {this->throttleCoeff = C_THROTTLE_SCALE_COEFF; }
+	throttleCoeff = _nt_table->GetNumber("Throttle Scale Coeff", C_THROTTLE_SCALE_COEFF);
 
-	this->throttleDemand = std::copysign(std::min((Throttle*Throttle)*this->throttleCoeff, std::abs(Throttle)), Throttle);
-	this->rotationDemand = Rotation;
+	throttleDemand = std::copysign(std::min((Throttle*Throttle)*this->throttleCoeff, std::abs(Throttle)), Throttle);
+	rotationDemand = Rotation;
 	
-	if(ntRampTime != NULL)
-	{
-		if(Motor_Left_Master != NULL) { Motor_Left_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-		if(Motor_Right_Master != NULL) { Motor_Right_Master->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-		if(Motor_Left_Slave != NULL) { Motor_Left_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-		if(Motor_Right_Slave != NULL) { Motor_Right_Slave->ConfigOpenloopRamp(ntRampTime->GetNumber(2.0)); }
-	}
+	if(Motor_Left_Master != NULL) 	{ Motor_Left_Master->ConfigOpenloopRamp(0.5); }//this->_nt_table->GetNumber("DT Ramp Time", 2.0)); }
+	if(Motor_Right_Master != NULL) 	{ Motor_Right_Master->ConfigOpenloopRamp(0.5); }//this->_nt_table->GetNumber("DT Ramp Time", 2.0)); }
+	if(Motor_Left_Slave != NULL) 	{ Motor_Left_Slave->ConfigOpenloopRamp(0.5); }//this->_nt_table->GetNumber("DT Ramp Time", 2.0)); }
+	if(Motor_Right_Slave != NULL) 	{ Motor_Right_Slave->ConfigOpenloopRamp(0.5); }//this->_nt_table->GetNumber("DT Ramp Time", 2.0)); }
 
 	if((drive != NULL) && (Motor_Left_Master != NULL) && (Motor_Right_Master != NULL))
 	{
@@ -145,8 +128,19 @@ void X22_Drivetrain::Drive_Arcade(double Throttle, double Rotation, bool ShiftOv
 			 !ShiftOverride && (units::math::abs(cs_PV.vx) > C_SHIFT_UP_SPEED));
 
 		// Set motor outputs (direct control)
-		Motor_Left_Master->Set(ControlMode::PercentOutput, wsInput.left);
-		Motor_Right_Master->Set(ControlMode::PercentOutput, wsInput.right);
+
+		if(EBrake)
+		{
+			SetBrakeMode();
+			Motor_Left_Master->Set(ControlMode::PercentOutput, 0.0);
+			Motor_Right_Master->Set(ControlMode::PercentOutput, 0.0);
+		}
+		else
+		{
+			SetCoastMode();
+			Motor_Left_Master->Set(ControlMode::PercentOutput, wsInput.left);
+			Motor_Right_Master->Set(ControlMode::PercentOutput, wsInput.right);
+		}
 
 		// Send subsystem data to the dashboard
 		this->_UpdateDashboard();
@@ -154,6 +148,8 @@ void X22_Drivetrain::Drive_Arcade(double Throttle, double Rotation, bool ShiftOv
 		// Handle motor safety
 		drive->Feed();
 		drive->FeedWatchdog();
+		drive->Check();
+		drive->CheckMotors();
 	}
 }
 /*
@@ -256,6 +252,8 @@ void X22_Drivetrain::Drive_Curve(double Throttle, double Rotation, bool ShiftOve
 		// Handle motor safety
 		drive->Feed();
 		drive->FeedWatchdog();
+		drive->Check();
+		drive->CheckMotors();	
 	}
 }
 */
@@ -263,7 +261,7 @@ void X22_Drivetrain::Shift(bool ShiftLow, bool ShiftHigh)
 {
 	if(_shifter != NULL)
 	{
-		_shifter->Set((ShiftHigh && !ShiftLow) ? DoubleSolenoid::kForward : DoubleSolenoid::kReverse);
+		_shifter->Set(ShiftHigh && !ShiftLow);
 	}
 
 	inLowGear = ShiftLow;
@@ -279,25 +277,46 @@ double X22_Drivetrain::_CalcWheelVelocity(double counts)
 
 void X22_Drivetrain::_UpdateDashboard()
 {
-	if(ntThrottleIn != NULL) { ntThrottleIn->SetNumber(this->throttleDemand); }
-	if(ntRotationIn != NULL) { ntRotationIn->SetNumber(this->rotationDemand); }
+	this->_nt_table->PutNumber("Left Velocity", units::convert<meters_per_second, feet_per_second>(ws_PVf.left).value());
+	this->_nt_table->PutNumber("Right Velocity", units::convert<meters_per_second, feet_per_second>(ws_PVf.right).value());
+
+	this->_nt_table->PutBoolean("In High Gear", this->inHighGear);
+	this->_nt_table->PutBoolean("In Low Gear" , this->inLowGear);
+
+	// if(ntThrottleIn != NULL) { ntThrottleIn->SetNumber(this->throttleDemand); }
+	// if(ntRotationIn != NULL) { ntRotationIn->SetNumber(this->rotationDemand); }
 	
-	if(ntLeftOut != NULL) { ntLeftOut->SetNumber(this->wsInput.left); }
-	if(ntRightOut != NULL) { ntRightOut->SetNumber(this->wsInput.right); }
+	// if(ntLeftOut != NULL) { ntLeftOut->SetNumber(this->wsInput.left); }
+	// if(ntRightOut != NULL) { ntRightOut->SetNumber(this->wsInput.right); }
 
-	if(ntLeftVel != NULL) { ntLeftVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.left).value()); }
-	if(ntRightVel != NULL) { ntRightVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.right).value()); }
+	// if(ntLeftVel != NULL) { ntLeftVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.left).value()); }
+	// if(ntRightVel != NULL) { ntRightVel->SetNumber(units::convert<meters_per_second, feet_per_second>(ws_PVf.right).value()); }
 
-	if(ntChassisVx != NULL) { ntChassisVx->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vx).value()); }
-	if(ntChassisVy != NULL) { ntChassisVy->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vy).value()); }
-	if(ntChassisOmega != NULL) { ntChassisOmega->SetNumber(units::convert<radians_per_second, degrees_per_second>(cs_PV.omega).value()); }
+	// if(ntChassisVx != NULL) { ntChassisVx->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vx).value()); }
+	// if(ntChassisVy != NULL) { ntChassisVy->SetNumber(units::convert<meters_per_second, feet_per_second>(cs_PV.vy).value()); }
+	// if(ntChassisOmega != NULL) { ntChassisOmega->SetNumber(units::convert<radians_per_second, degrees_per_second>(cs_PV.omega).value()); }
 
-	if(ntInLowGear != NULL) { ntInLowGear->SetBool(this->inLowGear); }
-	if(ntInHighGear != NULL) { ntInHighGear->SetBool(this->ntInHighGear); }
+	// if(ntInLowGear != NULL) { ntInLowGear->SetBool(this->inLowGear); }
+	// if(ntInHighGear != NULL) { ntInHighGear->SetBool(this->ntInHighGear); }
+
+	// if(ntLeftCurrent != NULL) { ntLeftCurrent->SetNumber(Motor_Left_Master->GetOutputCurrent()); }
+	// if(ntRightCurrent != NULL) { ntRightCurrent->SetNumber(Motor_Right_Master->GetOutputCurrent()); }
 }
 
 void X22_Drivetrain::_InitDashboard()
 {
+    this->_nt_inst = NetworkTableInstance::GetDefault();
+    this->_nt_table = this->_nt_inst.GetTable("X22");
+
+	this->_nt_table->PutNumber("DT Ramp Time", 2.0);
+	this->_nt_table->PutNumber("Throttle Scale Coeff", C_THROTTLE_SCALE_COEFF);
+
+	this->_nt_table->PutNumber("Left Velocity", 0.0);
+	this->_nt_table->PutNumber("Right Velocity", 0.0);
+	this->_nt_table->PutBoolean("In High Gear", false);
+	this->_nt_table->PutBoolean("In Low Gear", true);
+	
+	/*
 	ntLeftOut = DebugDash->AddNumBar("Left Output", props_numbar);
 	ntRightOut = DebugDash->AddNumBar("Right Output", props_numbar);
 	ntLeftVel = DebugDash->AddNumBar("Left Velocity", props_diffdrive_hi);
@@ -307,20 +326,41 @@ void X22_Drivetrain::_InitDashboard()
 	ntChassisOmega = DebugDash->AddNumBar("Chassis ω", props_diffdrive_hi);
 	ntThrottleIn = DebugDash->AddNumBar("Throttle In", props_numbar);
 	ntRotationIn = DebugDash->AddNumBar("Rotation In", props_numbar);
+	ntLeftCurrent = DebugDash->AddNumBar("I_Left", props_current);
+	ntRightCurrent = DebugDash->AddNumBar("I_Right", props_current);
+	*/
 
-	ntRampTime = DebugDash->AddEntry<double>("DT Ramp Time", 2.0);
-	ntThrottleScale = DebugDash->AddEntry<double>("Throttle Scale Coeff", C_THROTTLE_SCALE_COEFF);
-
+	//ntRampTime = DebugDash->AddEntry<double>("DT Ramp Time", 2.0);
+	//ntThrottleScale = DebugDash->AddEntry<double>("Throttle Scale Coeff", C_THROTTLE_SCALE_COEFF);
 }
 
 void X22_Drivetrain::_InitMotor(WPI_TalonFX* Motor, bool Invert, WPI_TalonFX* Master)
 {
-	Motor->SetInverted(Invert);
-	Motor->SetNeutralMode(NeutralMode::Coast);
-	Motor->ConfigOpenloopRamp(2);
-	Motor->ConfigClosedloopRamp(0);
-	Motor->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-	Motor->SetSelectedSensorPosition(0);
+	if(Motor != NULL)
+	{
+		Motor->SetInverted(Invert);
+		Motor->SetNeutralMode(NeutralMode::Brake);
+		Motor->ConfigOpenloopRamp(2);
+		Motor->ConfigClosedloopRamp(0);
+		Motor->ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+		Motor->SetSelectedSensorPosition(0);
 
-	if(Master != NULL) { Motor->Follow(*Master); }
+		if(Master != NULL) { Motor->Follow(*Master); }
+	}
+}
+
+void X22_Drivetrain::SetBrakeMode()
+{
+	if(this->Motor_Left_Master != NULL) { this->Motor_Left_Master->SetNeutralMode(NeutralMode::Brake); }
+	if(this->Motor_Left_Slave != NULL) { this->Motor_Left_Slave->SetNeutralMode(NeutralMode::Brake); }
+	if(this->Motor_Right_Master != NULL) { this->Motor_Right_Master->SetNeutralMode(NeutralMode::Brake); }
+	if(this->Motor_Right_Slave != NULL) { this->Motor_Right_Slave->SetNeutralMode(NeutralMode::Brake); }
+}
+
+void X22_Drivetrain::SetCoastMode()
+{
+	if(this->Motor_Left_Master != NULL) { this->Motor_Left_Master->SetNeutralMode(NeutralMode::Coast); }
+	if(this->Motor_Left_Slave != NULL) { this->Motor_Left_Slave->SetNeutralMode(NeutralMode::Coast); }
+	if(this->Motor_Right_Master != NULL) { this->Motor_Right_Master->SetNeutralMode(NeutralMode::Coast); }
+	if(this->Motor_Right_Slave != NULL) { this->Motor_Right_Slave->SetNeutralMode(NeutralMode::Coast); }
 }
